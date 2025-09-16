@@ -1,0 +1,6 @@
+# Logs
+.cursor
+.taskmaster/templates
+config.json
+state.json
+.env.example
