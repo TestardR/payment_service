@@ -37,7 +37,7 @@ func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID strin
 	if err != nil {
 		return err
 	}
-	
+
 	var updatedPayment payment.Payment
 	switch newStatus {
 	case payment.StatusProcessed:
@@ -53,6 +53,6 @@ func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID strin
 	default:
 		return shared.ErrInvalidPaymentStatus
 	}
-	
+
 	return s.repository.Save(ctx, updatedPayment)
 }

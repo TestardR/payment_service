@@ -52,7 +52,7 @@ func (p Payment) MarkAsProcessed(updatedAt time.Time) (Payment, error) {
 	if !p.canTransitionTo(StatusProcessed) {
 		return p, shared.ErrInvalidStatusTransition
 	}
-	
+
 	p.status = StatusProcessed
 	p.updatedAt = updatedAt
 	return p, nil
@@ -62,7 +62,7 @@ func (p Payment) MarkAsFailed(updatedAt time.Time) (Payment, error) {
 	if !p.canTransitionTo(StatusFailed) {
 		return p, shared.ErrInvalidStatusTransition
 	}
-	
+
 	p.status = StatusFailed
 	p.updatedAt = updatedAt
 	return p, nil
@@ -94,7 +94,7 @@ func validatePaymentData(debtorName, creditorName string, amount shared.Amount) 
 	if len(debtorName) < 3 {
 		return shared.ErrInvalidAmount
 	}
-	
+
 	if len(creditorName) < 3 {
 		return shared.ErrInvalidAmount
 	}

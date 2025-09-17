@@ -7,6 +7,8 @@ import (
 
 	"paymentprocessor/internal/domain/payment"
 	"paymentprocessor/internal/domain/shared"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Mock repository for testing
@@ -64,7 +66,7 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 	creditorIBAN, _ := shared.NewIBAN("FR1420041010050500013M02606")
 	amount, _ := shared.NewAmount(100.50)
 	idempotencyKey, _ := shared.NewIdempotencyKey("abc123XYZ0")
-	
+
 	now := time.Now()
 	existingPayment, _ := payment.NewPayment(
 		"payment-123",
@@ -80,10 +82,10 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 	repo.Save(ctx, existingPayment)
 
 	tests := []struct {
-		name           string
-		key            shared.IdempotencyKey
-		expectPayment  bool
-		expectError    error
+		name          string
+		key           shared.IdempotencyKey
+		expectPayment bool
+		expectError   error
 	}{
 		{
 			name:          "existing payment found",
@@ -104,22 +106,14 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 			foundPayment, err := service.EnsureIdempotency(ctx, tt.key)
 
 			if tt.expectError != nil {
-				if err != tt.expectError {
-					t.Errorf("expected error %v, got %v", tt.expectError, err)
-				}
+				assert.Equal(t, tt.expectError, err, "expected specific error")
 				if tt.expectPayment {
-					if foundPayment.ID() != existingPayment.ID() {
-						t.Errorf("expected to find existing payment %q, got %q", existingPayment.ID(), foundPayment.ID())
-					}
+					assert.Equal(t, existingPayment.ID(), foundPayment.ID(), "expected to find existing payment")
 				}
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
+				assert.NoError(t, err, "should not return error for new payment")
 				// For new payments, we expect an empty payment
-				if foundPayment.ID() != "" {
-					t.Errorf("expected empty payment for new key, got payment with ID %q", foundPayment.ID())
-				}
+				assert.Empty(t, foundPayment.ID(), "expected empty payment for new key")
 			}
 		})
 	}
@@ -135,7 +129,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 	creditorIBAN, _ := shared.NewIBAN("FR1420041010050500013M02606")
 	amount, _ := shared.NewAmount(100.50)
 	idempotencyKey, _ := shared.NewIdempotencyKey("abc123XYZ0")
-	
+
 	now := time.Now()
 	testPayment, _ := payment.NewPayment(
 		"payment-123",
@@ -164,7 +158,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 		},
 		{
 			name:        "valid transition to failed",
-			paymentID:   "payment-123", 
+			paymentID:   "payment-123",
 			newStatus:   payment.StatusFailed,
 			expectError: false,
 		},
@@ -192,19 +186,13 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			err := service.ProcessStatusUpdate(ctx, tt.paymentID, tt.newStatus, time.Now())
 
 			if tt.expectError {
-				if err == nil {
-					t.Error("expected error but got none")
-				}
+				assert.Error(t, err, "expected error but got none")
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				
+				assert.NoError(t, err, "unexpected error")
+
 				// Verify the payment was updated in repository
 				updatedPayment, _ := repo.FindByID(ctx, tt.paymentID)
-				if updatedPayment.Status() != tt.newStatus {
-					t.Errorf("expected status %q, got %q", tt.newStatus, updatedPayment.Status())
-				}
+				assert.Equal(t, tt.newStatus, updatedPayment.Status(), "payment status should be updated")
 			}
 		})
 	}
@@ -215,7 +203,5 @@ func TestNewPaymentService(t *testing.T) {
 	service := NewPaymentService(repo)
 
 	// Test that service is created as value type
-	if service.repository == nil {
-		t.Error("expected repository to be set")
-	}
+	assert.NotNil(t, service.repository, "expected repository to be set")
 }
