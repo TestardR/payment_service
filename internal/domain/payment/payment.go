@@ -29,12 +29,12 @@ func NewPayment(
 	idempotencyKey shared.IdempotencyKey,
 	createdAt time.Time,
 	updatedAt time.Time,
-) (*Payment, error) {
+) (Payment, error) {
 	if err := validatePaymentData(debtorName, creditorName, amount); err != nil {
-		return nil, err
+		return Payment{}, err
 	}
 
-	return &Payment{
+	return Payment{
 		id:             id,
 		debtorIBAN:     debtorIBAN,
 		debtorName:     debtorName,
@@ -48,27 +48,27 @@ func NewPayment(
 	}, nil
 }
 
-func (p *Payment) MarkAsProcessed(updatedAt time.Time) error {
+func (p Payment) MarkAsProcessed(updatedAt time.Time) (Payment, error) {
 	if !p.canTransitionTo(StatusProcessed) {
-		return shared.ErrInvalidStatusTransition
+		return p, shared.ErrInvalidStatusTransition
 	}
-
+	
 	p.status = StatusProcessed
 	p.updatedAt = updatedAt
-	return nil
+	return p, nil
 }
 
-func (p *Payment) MarkAsFailed(updatedAt time.Time) error {
+func (p Payment) MarkAsFailed(updatedAt time.Time) (Payment, error) {
 	if !p.canTransitionTo(StatusFailed) {
-		return shared.ErrInvalidStatusTransition
+		return p, shared.ErrInvalidStatusTransition
 	}
-
+	
 	p.status = StatusFailed
 	p.updatedAt = updatedAt
-	return nil
+	return p, nil
 }
 
-func (p *Payment) canTransitionTo(newStatus PaymentStatus) bool {
+func (p Payment) canTransitionTo(newStatus PaymentStatus) bool {
 	switch p.status {
 	case StatusPending:
 		return newStatus == StatusProcessed || newStatus == StatusFailed

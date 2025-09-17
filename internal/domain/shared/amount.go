@@ -51,3 +51,14 @@ func (a Amount) Equals(other Amount) bool {
 func (a Amount) IsZero() bool {
 	return a.value == 0
 }
+
+func (a Amount) Add(other Amount) Amount {
+	return Amount{value: a.value + other.value}
+}
+
+func (a Amount) Subtract(other Amount) (Amount, error) {
+	if a.value < other.value {
+		return Amount{}, fmt.Errorf("cannot subtract, result would be negative")
+	}
+	return Amount{value: a.value - other.value}, nil
+}

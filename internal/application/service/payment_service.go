@@ -37,19 +37,22 @@ func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID strin
 	if err != nil {
 		return err
 	}
-
+	
+	var updatedPayment payment.Payment
 	switch newStatus {
 	case payment.StatusProcessed:
-		if err := existingPayment.MarkAsProcessed(updatedAt); err != nil {
+		updatedPayment, err = existingPayment.MarkAsProcessed(updatedAt)
+		if err != nil {
 			return err
 		}
 	case payment.StatusFailed:
-		if err := existingPayment.MarkAsFailed(updatedAt); err != nil {
+		updatedPayment, err = existingPayment.MarkAsFailed(updatedAt)
+		if err != nil {
 			return err
 		}
 	default:
 		return shared.ErrInvalidPaymentStatus
 	}
-
-	return s.repository.UpdateStatus(ctx, paymentID, newStatus)
+	
+	return s.repository.Save(ctx, updatedPayment)
 }
