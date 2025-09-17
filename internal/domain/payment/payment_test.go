@@ -128,13 +128,13 @@ func TestPayment_MarkAsProcessed(t *testing.T) {
 	updatedAt := time.Now().Add(time.Hour)
 
 	// Test successful transition
-	updatedPayment, err := payment.MarkAsProcessed(updatedAt)
+	err := payment.MarkAsProcessed(updatedAt)
 	assert.NoError(t, err, "should successfully mark payment as processed")
-	assert.Equal(t, StatusProcessed, updatedPayment.Status(), "status should be processed")
-	assert.True(t, updatedPayment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
+	assert.Equal(t, StatusProcessed, payment.Status(), "status should be processed")
+	assert.True(t, payment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
 
 	// Test invalid transition from processed state
-	_, err = updatedPayment.MarkAsProcessed(updatedAt)
+	err = payment.MarkAsProcessed(updatedAt)
 	assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 }
 
@@ -145,13 +145,13 @@ func TestPayment_MarkAsFailed(t *testing.T) {
 	updatedAt := time.Now().Add(time.Hour)
 
 	// Test successful transition
-	updatedPayment, err := payment.MarkAsFailed(updatedAt)
+	err := payment.MarkAsFailed(updatedAt)
 	assert.NoError(t, err, "should successfully mark payment as failed")
-	assert.Equal(t, StatusFailed, updatedPayment.Status(), "status should be failed")
-	assert.True(t, updatedPayment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
+	assert.Equal(t, StatusFailed, payment.Status(), "status should be failed")
+	assert.True(t, payment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
 
 	// Test invalid transition from failed state
-	_, err = updatedPayment.MarkAsFailed(updatedAt)
+	err = payment.MarkAsFailed(updatedAt)
 	assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 }
 
@@ -189,7 +189,7 @@ func TestPayment_StatusTransitions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+		for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			payment := createValidPayment(t)
@@ -197,32 +197,31 @@ func TestPayment_StatusTransitions(t *testing.T) {
 
 			// Set initial status
 			if tt.initialStatus == StatusProcessed {
-				payment, _ = payment.MarkAsProcessed(updatedAt)
+				_ = payment.MarkAsProcessed(updatedAt)
 			} else if tt.initialStatus == StatusFailed {
-				payment, _ = payment.MarkAsFailed(updatedAt)
+				_ = payment.MarkAsFailed(updatedAt)
 			}
 
 			// Attempt transition
 			var err error
-			var updatedPayment Payment
 			if tt.targetStatus == StatusProcessed {
-				updatedPayment, err = payment.MarkAsProcessed(updatedAt)
+				err = payment.MarkAsProcessed(updatedAt)
 			} else if tt.targetStatus == StatusFailed {
-				updatedPayment, err = payment.MarkAsFailed(updatedAt)
+				err = payment.MarkAsFailed(updatedAt)
 			}
 
 			if tt.expectError {
 				assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 			} else {
 				assert.NoError(t, err, "should successfully transition status")
-				assert.Equal(t, tt.targetStatus, updatedPayment.Status(), "status should match target status")
+				assert.Equal(t, tt.targetStatus, payment.Status(), "status should match target status")
 			}
 		})
 	}
 }
 
 // Helper function to create a valid payment for testing
-func createValidPayment(t *testing.T) Payment {
+func createValidPayment(t *testing.T) *Payment {
 	debtorIBAN, _ := shared.NewIBAN("GB82WEST12345698765432")
 	creditorIBAN, _ := shared.NewIBAN("FR1420041010050500013M02606")
 	amount, _ := shared.NewAmount(100.50)

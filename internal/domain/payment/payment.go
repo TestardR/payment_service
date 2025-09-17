@@ -29,12 +29,12 @@ func NewPayment(
 	idempotencyKey shared.IdempotencyKey,
 	createdAt time.Time,
 	updatedAt time.Time,
-) (Payment, error) {
+) (*Payment, error) {
 	if err := validatePaymentData(debtorName, creditorName, amount); err != nil {
-		return Payment{}, err
+		return nil, err
 	}
 
-	return Payment{
+	return &Payment{
 		id:             id,
 		debtorIBAN:     debtorIBAN,
 		debtorName:     debtorName,
@@ -48,27 +48,27 @@ func NewPayment(
 	}, nil
 }
 
-func (p Payment) MarkAsProcessed(updatedAt time.Time) (Payment, error) {
+func (p *Payment) MarkAsProcessed(updatedAt time.Time) error {
 	if !p.canTransitionTo(StatusProcessed) {
-		return p, shared.ErrInvalidStatusTransition
+		return shared.ErrInvalidStatusTransition
 	}
 
 	p.status = StatusProcessed
 	p.updatedAt = updatedAt
-	return p, nil
+	return nil
 }
 
-func (p Payment) MarkAsFailed(updatedAt time.Time) (Payment, error) {
+func (p *Payment) MarkAsFailed(updatedAt time.Time) error {
 	if !p.canTransitionTo(StatusFailed) {
-		return p, shared.ErrInvalidStatusTransition
+		return shared.ErrInvalidStatusTransition
 	}
 
 	p.status = StatusFailed
 	p.updatedAt = updatedAt
-	return p, nil
+	return nil
 }
 
-func (p Payment) canTransitionTo(newStatus PaymentStatus) bool {
+func (p *Payment) canTransitionTo(newStatus PaymentStatus) bool {
 	switch p.status {
 	case StatusPending:
 		return newStatus == StatusProcessed || newStatus == StatusFailed
@@ -79,16 +79,16 @@ func (p Payment) canTransitionTo(newStatus PaymentStatus) bool {
 	}
 }
 
-func (p Payment) ID() string                            { return p.id }
-func (p Payment) DebtorIBAN() shared.IBAN               { return p.debtorIBAN }
-func (p Payment) DebtorName() string                    { return p.debtorName }
-func (p Payment) CreditorIBAN() shared.IBAN             { return p.creditorIBAN }
-func (p Payment) CreditorName() string                  { return p.creditorName }
-func (p Payment) Amount() shared.Amount                 { return p.amount }
-func (p Payment) IdempotencyKey() shared.IdempotencyKey { return p.idempotencyKey }
-func (p Payment) Status() PaymentStatus                 { return p.status }
-func (p Payment) CreatedAt() time.Time                  { return p.createdAt }
-func (p Payment) UpdatedAt() time.Time                  { return p.updatedAt }
+func (p *Payment) ID() string                            { return p.id }
+func (p *Payment) DebtorIBAN() shared.IBAN               { return p.debtorIBAN }
+func (p *Payment) DebtorName() string                    { return p.debtorName }
+func (p *Payment) CreditorIBAN() shared.IBAN             { return p.creditorIBAN }
+func (p *Payment) CreditorName() string                  { return p.creditorName }
+func (p *Payment) Amount() shared.Amount                 { return p.amount }
+func (p *Payment) IdempotencyKey() shared.IdempotencyKey { return p.idempotencyKey }
+func (p *Payment) Status() PaymentStatus                 { return p.status }
+func (p *Payment) CreatedAt() time.Time                  { return p.createdAt }
+func (p *Payment) UpdatedAt() time.Time                  { return p.updatedAt }
 
 func validatePaymentData(debtorName, creditorName string, amount shared.Amount) error {
 	if len(debtorName) < 3 {

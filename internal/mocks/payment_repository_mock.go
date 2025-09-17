@@ -43,10 +43,10 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // FindByID mocks base method.
-func (m *MockRepository) FindByID(ctx context.Context, id string) (payment.Payment, error) {
+func (m *MockRepository) FindByID(ctx context.Context, id string) (*payment.Payment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", ctx, id)
-	ret0, _ := ret[0].(payment.Payment)
+	ret0, _ := ret[0].(*payment.Payment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -58,10 +58,10 @@ func (mr *MockRepositoryMockRecorder) FindByID(ctx, id any) *gomock.Call {
 }
 
 // FindByIdempotencyKey mocks base method.
-func (m *MockRepository) FindByIdempotencyKey(ctx context.Context, key shared.IdempotencyKey) (payment.Payment, error) {
+func (m *MockRepository) FindByIdempotencyKey(ctx context.Context, key shared.IdempotencyKey) (*payment.Payment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByIdempotencyKey", ctx, key)
-	ret0, _ := ret[0].(payment.Payment)
+	ret0, _ := ret[0].(*payment.Payment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -73,7 +73,7 @@ func (mr *MockRepositoryMockRecorder) FindByIdempotencyKey(ctx, key any) *gomock
 }
 
 // Save mocks base method.
-func (m *MockRepository) Save(ctx context.Context, arg1 payment.Payment) error {
+func (m *MockRepository) Save(ctx context.Context, arg1 *payment.Payment) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Save", ctx, arg1)
 	ret0, _ := ret[0].(error)

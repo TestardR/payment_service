@@ -61,7 +61,7 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByIdempotencyKey(ctx, newKey).
-					Return(payment.Payment{}, shared.ErrPaymentNotFound)
+					Return(nil, shared.ErrPaymentNotFound)
 			},
 			expectPayment: false,
 			expectError:   nil,
@@ -80,7 +80,6 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			foundPayment, err := service.EnsureIdempotency(ctx, tt.key)
-
 			if tt.expectError != nil {
 				assert.Equal(t, tt.expectError, err, "expected specific error")
 				if tt.expectPayment {
@@ -88,8 +87,8 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err, "should not return error for new payment")
-				// For new payments, we expect an empty payment
-				assert.Empty(t, foundPayment.ID(), "expected empty payment for new key")
+				// For new payments, we expect nil payment
+				assert.Nil(t, foundPayment, "expected nil payment for new key")
 			}
 		})
 	}
@@ -106,17 +105,22 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 	idempotencyKey, _ := shared.NewIdempotencyKey("abc123XYZ0")
 
 	now := time.Now()
-	testPayment, _ := payment.NewPayment(
-		"payment-123",
-		debtorIBAN,
-		"John Doe",
-		creditorIBAN,
-		"Jane Smith",
-		amount,
-		idempotencyKey,
-		now,
-		now,
-	)
+
+	// Helper function to create a fresh payment for each test
+	createTestPayment := func() *payment.Payment {
+		testPayment, _ := payment.NewPayment(
+			"payment-123",
+			debtorIBAN,
+			"John Doe",
+			creditorIBAN,
+			"Jane Smith",
+			amount,
+			idempotencyKey,
+			now,
+			now,
+		)
+		return testPayment
+	}
 
 	tests := []struct {
 		name        string
@@ -132,10 +136,10 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByID(ctx, "payment-123").
-					Return(testPayment, nil)
+					Return(createTestPayment(), nil)
 				mockRepo.EXPECT().
 					Save(ctx, gomock.Cond(func(p interface{}) bool {
-						if pmt, ok := p.(payment.Payment); ok {
+						if pmt, ok := p.(*payment.Payment); ok {
 							return pmt.ID() == "payment-123" && pmt.Status() == payment.StatusProcessed
 						}
 						return false
@@ -151,10 +155,10 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByID(ctx, "payment-123").
-					Return(testPayment, nil)
+					Return(createTestPayment(), nil)
 				mockRepo.EXPECT().
 					Save(ctx, gomock.Cond(func(p interface{}) bool {
-						if pmt, ok := p.(payment.Payment); ok {
+						if pmt, ok := p.(*payment.Payment); ok {
 							return pmt.ID() == "payment-123" && pmt.Status() == payment.StatusFailed
 						}
 						return false
@@ -170,7 +174,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByID(ctx, "nonexistent").
-					Return(payment.Payment{}, shared.ErrPaymentNotFound)
+					Return(nil, shared.ErrPaymentNotFound)
 			},
 			expectError: true,
 		},
@@ -181,7 +185,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByID(ctx, "payment-123").
-					Return(testPayment, nil)
+					Return(createTestPayment(), nil)
 				// No Save call expected because the service should return error before calling Save
 			},
 			expectError: true,
