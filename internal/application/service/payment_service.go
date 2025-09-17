@@ -22,11 +22,11 @@ func (s *PaymentService) EnsureIdempotency(ctx context.Context, key shared.Idemp
 	if err != nil && err != shared.ErrPaymentNotFound {
 		return nil, err
 	}
-	
+
 	if existingPayment != nil {
 		return existingPayment, shared.ErrDuplicatePayment
 	}
-	
+
 	return nil, nil
 }
 
@@ -35,7 +35,7 @@ func (s *PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID stri
 	if err != nil {
 		return err
 	}
-	
+
 	switch newStatus {
 	case payment.StatusProcessed:
 		if err := existingPayment.MarkAsProcessed(); err != nil {
@@ -48,6 +48,6 @@ func (s *PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID stri
 	default:
 		return shared.ErrInvalidPaymentStatus
 	}
-	
+
 	return s.repository.UpdateStatus(ctx, paymentID, newStatus)
 }
