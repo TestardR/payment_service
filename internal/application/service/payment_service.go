@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"paymentprocessor/internal/domain/payment"
 	"paymentprocessor/internal/domain/shared"
@@ -11,26 +13,26 @@ type PaymentService struct {
 	repository payment.Repository
 }
 
-func NewPaymentService(repository payment.Repository) *PaymentService {
-	return &PaymentService{
+func NewPaymentService(repository payment.Repository) PaymentService {
+	return PaymentService{
 		repository: repository,
 	}
 }
 
-func (s *PaymentService) EnsureIdempotency(ctx context.Context, key shared.IdempotencyKey) (*payment.Payment, error) {
+func (s PaymentService) EnsureIdempotency(ctx context.Context, key shared.IdempotencyKey) (payment.Payment, error) {
 	existingPayment, err := s.repository.FindByIdempotencyKey(ctx, key)
-	if err != nil && err != shared.ErrPaymentNotFound {
-		return nil, err
+	if err != nil && !errors.Is(err, shared.ErrPaymentNotFound) {
+		return payment.Payment{}, err
 	}
 
-	if existingPayment != nil {
+	if err == nil {
 		return existingPayment, shared.ErrDuplicatePayment
 	}
 
-	return nil, nil
+	return payment.Payment{}, nil
 }
 
-func (s *PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID string, newStatus payment.PaymentStatus) error {
+func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID string, newStatus payment.PaymentStatus, updatedAt time.Time) error {
 	existingPayment, err := s.repository.FindByID(ctx, paymentID)
 	if err != nil {
 		return err
@@ -38,11 +40,11 @@ func (s *PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID stri
 
 	switch newStatus {
 	case payment.StatusProcessed:
-		if err := existingPayment.MarkAsProcessed(); err != nil {
+		if err := existingPayment.MarkAsProcessed(updatedAt); err != nil {
 			return err
 		}
 	case payment.StatusFailed:
-		if err := existingPayment.MarkAsFailed(); err != nil {
+		if err := existingPayment.MarkAsFailed(updatedAt); err != nil {
 			return err
 		}
 	default:

@@ -27,12 +27,13 @@ func NewPayment(
 	creditorName string,
 	amount shared.Amount,
 	idempotencyKey shared.IdempotencyKey,
+	createdAt time.Time,
+	updatedAt time.Time,
 ) (*Payment, error) {
 	if err := validatePaymentData(debtorName, creditorName, amount); err != nil {
 		return nil, err
 	}
 
-	now := time.Now()
 	return &Payment{
 		id:             id,
 		debtorIBAN:     debtorIBAN,
@@ -42,28 +43,28 @@ func NewPayment(
 		amount:         amount,
 		idempotencyKey: idempotencyKey,
 		status:         StatusPending,
-		createdAt:      now,
-		updatedAt:      now,
+		createdAt:      createdAt,
+		updatedAt:      updatedAt,
 	}, nil
 }
 
-func (p *Payment) MarkAsProcessed() error {
+func (p *Payment) MarkAsProcessed(updatedAt time.Time) error {
 	if !p.canTransitionTo(StatusProcessed) {
 		return shared.ErrInvalidStatusTransition
 	}
 
 	p.status = StatusProcessed
-	p.updatedAt = time.Now()
+	p.updatedAt = updatedAt
 	return nil
 }
 
-func (p *Payment) MarkAsFailed() error {
+func (p *Payment) MarkAsFailed(updatedAt time.Time) error {
 	if !p.canTransitionTo(StatusFailed) {
 		return shared.ErrInvalidStatusTransition
 	}
 
 	p.status = StatusFailed
-	p.updatedAt = time.Now()
+	p.updatedAt = updatedAt
 	return nil
 }
 
@@ -72,13 +73,12 @@ func (p *Payment) canTransitionTo(newStatus PaymentStatus) bool {
 	case StatusPending:
 		return newStatus == StatusProcessed || newStatus == StatusFailed
 	case StatusProcessed, StatusFailed:
-		return false // Final states
+		return false
 	default:
 		return false
 	}
 }
 
-// Getters
 func (p *Payment) ID() string                            { return p.id }
 func (p *Payment) DebtorIBAN() shared.IBAN               { return p.debtorIBAN }
 func (p *Payment) DebtorName() string                    { return p.debtorName }
@@ -92,11 +92,11 @@ func (p *Payment) UpdatedAt() time.Time                  { return p.updatedAt }
 
 func validatePaymentData(debtorName, creditorName string, amount shared.Amount) error {
 	if len(debtorName) < 3 || len(debtorName) > 30 {
-		return shared.ErrInvalidAmount // Using generic error, could be more specific
+		return shared.ErrInvalidAmount
 	}
 
 	if len(creditorName) < 3 || len(creditorName) > 30 {
-		return shared.ErrInvalidAmount // Using generic error, could be more specific
+		return shared.ErrInvalidAmount
 	}
 
 	if amount.IsZero() {
