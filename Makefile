@@ -1,54 +1,42 @@
 # Makefile for Payment Processor
 
-# Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-GOMOD=$(GOCMD) mod
-GOFMT=gofmt
-GOVET=$(GOCMD) vet
-
-# Binary name
 BINARY_NAME=payment-processor
-BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Build the application
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	go build -o $(BINARY_NAME) -v ./...
 
 # Build for Linux
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./...
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BINARY_NAME)_unix -v ./...
 
 # Clean build artifacts
 clean:
-	$(GOCLEAN)
+	go clean
 	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_UNIX)
+	rm -f $(BINARY_NAME)_unix
 
 # Run tests
 test:
-	$(GOTEST) -v ./...
+	go test -v ./...
 
 # Run tests with coverage
 test-coverage:
-	$(GOTEST) -v -coverprofile=coverage.out ./...
-	$(GOCMD) tool cover -html=coverage.out
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
 
 # Run the application
 run:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	go build -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
 
 # Format code
 fmt:
-	$(GOFMT) -s -w .
+	gofmt -s -w .
 
 # Run go vet
 vet:
-	$(GOVET) ./...
+	go vet ./...
 
 # Run linting tools
 lint: fmt vet
@@ -56,13 +44,13 @@ lint: fmt vet
 
 # Download dependencies
 deps:
-	$(GOMOD) download
-	$(GOMOD) tidy
+	go mod download
+	go mod tidy
 
 # Install development tools
 install-tools:
 	@echo "Installing development tools..."
-	$(GOGET) -u golang.org/x/tools/cmd/goimports
+	go get -u golang.org/x/tools/cmd/goimports
 
 # All-in-one development setup
 dev-setup: install-tools deps

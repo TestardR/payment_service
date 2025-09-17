@@ -1,4 +1,3 @@
-// Package main is the entry point for the payment processor service
 package main
 
 import (
