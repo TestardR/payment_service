@@ -1,0 +1,24 @@
+# Task ID: 17
+# Title: Implement Domain Layer Core Entities
+# Status: pending
+# Dependencies: 16
+# Priority: high
+# Description: Create the core domain entities and value objects for the payment processing system following DDD principles.
+# Details:
+1. Create Payment aggregate root in domain/payment/payment.go with rich behavior:
+   - Constructor with validation
+   - Status transition methods (markAsProcessed, markAsFailed)
+   - Business rules enforcement
+2. Implement value objects in domain/shared/:
+   - iban.go: IBAN value object with format validation
+   - amount.go: Amount value object with decimal handling
+   - idempotency_key.go: IdempotencyKey with uniqueness validation
+3. Create PaymentStatus enum in domain/payment/payment_status.go
+4. Define domain errors in domain/shared/errors.go
+5. Define repository interfaces in domain/payment/repository.go
+6. Implement domain services in domain/payment/service.go
+
+Use Go 1.18+ generics where appropriate for type safety. Ensure all domain objects are immutable where possible.
+
+# Test Strategy:
+Implement comprehensive table-driven tests for all domain entities and value objects. Test validation rules, business logic, and state transitions. Use property-based testing for IBAN validation. Achieve >90% test coverage for domain layer.

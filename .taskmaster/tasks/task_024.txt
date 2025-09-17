@@ -1,0 +1,21 @@
+# Task ID: 24
+# Title: Implement HTTP Authentication Middleware
+# Status: pending
+# Dependencies: 16
+# Priority: high
+# Description: Create HTTP basic authentication middleware for securing API endpoints.
+# Details:
+1. Implement authentication middleware in infrastructure/http/middleware/auth.go:
+   - Parse Authorization header
+   - Validate credentials against configuration
+   - Implement proper error handling for missing or invalid credentials
+   - Add logging for authentication failures
+2. Use environment variables for credential configuration
+3. Implement secure credential comparison to prevent timing attacks
+4. Add rate limiting for failed authentication attempts
+5. Implement proper HTTP status codes (401 for authentication failures)
+
+Use the standard library's subtle.ConstantTimeCompare for secure credential comparison. Implement proper logging for security events.
+
+# Test Strategy:
+Create unit tests for authentication middleware. Test valid credentials, invalid credentials, missing credentials. Test rate limiting for failed attempts. Verify proper HTTP status codes and headers in responses.

@@ -1,0 +1,23 @@
+# Task ID: 29
+# Title: Implement Background Worker for CSV Processing
+# Status: pending
+# Dependencies: 20
+# Priority: high
+# Description: Create a background worker for processing bank response CSV files.
+# Details:
+1. Implement StatusUpdater in infrastructure/worker/status_updater.go:
+   - Implement file monitoring logic using fsnotify (github.com/fsnotify/fsnotify v1.6.0)
+   - Parse CSV file using encoding/csv package
+   - Process CSV rows in batches
+   - Update payment status in database
+   - Implement proper error handling and retry logic
+2. Use goroutine for background processing
+3. Implement graceful shutdown
+4. Add file locking to prevent concurrent processing
+5. Implement batch processing with transactions
+6. Add metrics for processed records
+
+Use a channel-based approach for processing CSV rows. Implement proper error handling and logging for background processing.
+
+# Test Strategy:
+Create integration tests for CSV processing logic. Test file monitoring, parsing, and database updates. Test error handling and retry logic. Verify atomic batch processing. Test graceful shutdown.

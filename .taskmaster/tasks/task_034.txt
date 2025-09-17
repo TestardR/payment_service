@@ -1,0 +1,21 @@
+# Task ID: 34
+# Title: Implement Circuit Breaker for External Dependencies
+# Status: pending
+# Dependencies: 20, 21
+# Priority: low
+# Description: Implement circuit breaker pattern for external dependencies.
+# Details:
+1. Implement CircuitBreaker in infrastructure/resilience/circuit_breaker.go:
+   - Define interface for circuit breaker
+   - Implement state machine (closed, open, half-open)
+   - Add failure counting and thresholds
+   - Implement timeout for recovery
+   - Add metrics for circuit breaker state
+2. Apply circuit breaker to file system operations
+3. Apply circuit breaker to database operations
+4. Implement fallback mechanisms for critical operations
+
+Use a lightweight circuit breaker library like github.com/sony/gobreaker (v0.5.0). Implement proper logging for circuit breaker state changes.
+
+# Test Strategy:
+Create unit tests for circuit breaker logic. Test state transitions. Test failure counting and recovery. Verify metrics are properly updated. Test fallback mechanisms.

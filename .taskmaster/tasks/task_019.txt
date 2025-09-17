@@ -1,0 +1,25 @@
+# Task ID: 19
+# Title: Implement Application Layer Command Handlers
+# Status: pending
+# Dependencies: 17
+# Priority: high
+# Description: Create application layer command handlers for processing payment creation and status updates.
+# Details:
+1. Implement CreatePaymentCommand and handler in application/command/create_payment.go:
+   - Define command struct with all payment fields
+   - Implement handler with proper validation
+   - Use context for timeout and cancellation
+   - Return appropriate domain errors
+2. Implement UpdatePaymentStatusCommand and handler in application/command/update_status.go:
+   - Define command struct with payment ID and new status
+   - Implement handler with status transition validation
+   - Use context for timeout and cancellation
+3. Define application interfaces in application/port/:
+   - payment_persister.go: Interface for dual persistence
+   - xml_generator.go: Interface for XML generation
+4. Implement PaymentService in application/service/payment_service.go to orchestrate operations
+
+Use dependency injection for all external dependencies. Implement proper error handling with domain-specific errors.
+
+# Test Strategy:
+Create unit tests for command handlers using gomock to mock dependencies. Test validation logic, error handling, and successful execution paths. Verify context cancellation is properly handled. Test edge cases like duplicate idempotency keys.

@@ -1,0 +1,23 @@
+# Task ID: 21
+# Title: Implement XML File Generator
+# Status: pending
+# Dependencies: 17
+# Priority: high
+# Description: Create the XML file generator for persisting payment data in XML format.
+# Details:
+1. Implement XMLGenerator in infrastructure/persistence/xml/payment_xml_generator.go:
+   - Implement GenerateXML method to create XML from payment data
+   - Implement SaveXML method to write XML to file system
+   - Use encoding/xml package for XML generation
+   - Implement proper file naming convention
+   - Add file system error handling
+2. Create XML structure matching the requirements
+3. Implement file system operations with proper error handling
+4. Add atomic file write operations to prevent partial writes
+5. Implement directory structure for organizing XML files
+6. Add file cleanup mechanism for old XML files
+
+Use os.WriteFile with temporary file and rename for atomic writes. Implement proper error handling for file system operations.
+
+# Test Strategy:
+Create unit tests for XML generation logic. Create integration tests for file system operations. Verify XML structure matches requirements. Test error handling for file system failures. Test atomic write operations.

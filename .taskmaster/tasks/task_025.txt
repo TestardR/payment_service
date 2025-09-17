@@ -1,0 +1,24 @@
+# Task ID: 25
+# Title: Implement Payment API Endpoint
+# Status: pending
+# Dependencies: 19, 23, 24
+# Priority: high
+# Description: Create the REST API endpoint for payment submission.
+# Details:
+1. Implement PaymentHandler in infrastructure/http/handler/payment_handler.go:
+   - Implement POST /v1/payments endpoint
+   - Parse and validate request body
+   - Convert request to command
+   - Call application service
+   - Format response with payment ID
+   - Implement proper error handling
+2. Use standard library's net/http package
+3. Implement middleware chain with authentication and logging
+4. Add request ID generation for correlation
+5. Implement proper HTTP status codes
+6. Add response headers (Content-Type, etc.)
+
+Use context for request cancellation and timeouts. Implement proper error handling with appropriate HTTP status codes.
+
+# Test Strategy:
+Create unit tests for handler logic using httptest package. Test successful requests, validation failures, authentication failures. Verify proper HTTP status codes and response bodies. Test request cancellation and timeouts.

@@ -1,0 +1,22 @@
+# Task ID: 16
+# Title: Setup Project Structure with Clean Architecture
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the Go project with proper module structure following Clean Architecture and DDD principles as specified in the PRD.
+# Details:
+1. Initialize Go module with `go mod init payment-processor`
+2. Create directory structure following the PRD specifications:
+   - internal/domain/ (payment, shared)
+   - internal/application/ (command, query, port, service)
+   - internal/infrastructure/ (persistence, http, worker)
+3. Setup go.mod with Go 1.24.4 requirement
+4. Configure basic linting tools: gofmt, go vet, golint, staticcheck
+5. Create initial README.md with project overview
+6. Setup .gitignore file for Go projects
+7. Create Makefile with common commands (build, test, lint)
+8. Initialize basic configuration management structure using environment variables
+9. Setup conventional commits git hooks
+
+# Test Strategy:
+Verify directory structure matches PRD specifications. Ensure go.mod is properly configured with correct Go version. Validate that all development tools can be executed via Makefile commands.

@@ -2,227 +2,22 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
-        "title": "Setup Project Structure and Go Module",
-        "description": "Initialize the project with proper Go module structure following DDD architecture patterns",
-        "details": "Create the project directory structure according to the PRD's Clean Architecture and DDD approach. Initialize go.mod with Go 1.24.4 as the target version. Set up the internal directory structure with domain, application, and infrastructure layers. Create initial README.md with project overview. Configure .gitignore for Go projects. Set up basic configuration management using environment variables and a config package that supports YAML/JSON files. Use the following command: `go mod init github.com/yourusername/payment-processing-system` and set up the directory structure as specified in the PRD.",
-        "testStrategy": "Verify that the project structure matches the PRD requirements. Ensure go.mod is correctly configured with Go 1.24.4. Validate that all required directories exist and follow the DDD pattern.",
+        "id": 16,
+        "title": "Setup Project Structure with Clean Architecture",
+        "description": "Initialize the Go project with proper module structure following Clean Architecture and DDD principles as specified in the PRD.",
+        "details": "1. Initialize Go module with `go mod init payment-processor`\n2. Create directory structure following the PRD specifications:\n   - internal/domain/ (payment, shared)\n   - internal/application/ (command, query, port, service)\n   - internal/infrastructure/ (persistence, http, worker)\n3. Setup go.mod with Go 1.24.4 requirement\n4. Configure basic linting tools: gofmt, go vet, golint, staticcheck\n5. Create initial README.md with project overview\n6. Setup .gitignore file for Go projects\n7. Create Makefile with common commands (build, test, lint)\n8. Initialize basic configuration management structure using environment variables\n9. Setup conventional commits git hooks",
+        "testStrategy": "Verify directory structure matches PRD specifications. Ensure go.mod is properly configured with correct Go version. Validate that all development tools can be executed via Makefile commands.",
         "priority": "high",
         "dependencies": [],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 2,
-        "title": "Implement Domain Layer Value Objects",
-        "description": "Create core value objects for the domain layer including IBAN, Amount, and IdempotencyKey",
-        "details": "Implement immutable value objects in the domain/shared directory: 1) IBAN (iban.go): Create struct with validation for IBAN format using regexp package. 2) Amount (amount.go): Create struct with proper decimal handling using github.com/shopspring/decimal v1.3.1 for precise decimal calculations. 3) IdempotencyKey (idempotency_key.go): Create struct with validation for 10-character length. Each value object should implement proper validation, String() method, and constructors that enforce invariants. Include appropriate error types in errors.go for domain-specific validation failures.",
-        "testStrategy": "Create table-driven tests for each value object. Test validation rules (IBAN format, amount precision, idempotency key length). Test edge cases like zero amounts, invalid formats. Ensure immutability by verifying objects cannot be modified after creation.",
-        "priority": "high",
-        "dependencies": [
-          1
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 3,
-        "title": "Implement Payment Domain Entity",
-        "description": "Create the Payment aggregate root with business logic and validation rules",
-        "details": "Implement the Payment entity in domain/payment/payment.go as an aggregate root with rich domain behavior. Include fields for ID, debtor/creditor information (using IBAN and name value objects), amount, idempotency key, status, and timestamps. Implement methods for state transitions (e.g., markAsProcessed(), markAsFailed()). Add validation logic to ensure all business rules are enforced. Use value objects from task #2. Define PaymentStatus as an enumeration (iota) with PENDING, PROCESSED, FAILED states. Implement proper constructors that validate all inputs and enforce invariants.",
-        "testStrategy": "Write comprehensive unit tests for the Payment entity. Test creation with valid/invalid inputs. Test state transitions and validation rules. Verify business rules are enforced. Use table-driven tests to cover multiple scenarios.",
-        "priority": "high",
-        "dependencies": [
-          2
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 4,
-        "title": "Define Domain Repository Interfaces",
-        "description": "Create repository interfaces in the domain layer for persistence operations",
-        "details": "Define the PaymentRepository interface in domain/payment/repository.go with methods for CRUD operations: Create(), FindByID(), FindByIdempotencyKey(), Update(), etc. Use context.Context as the first parameter for all methods to support cancellation and timeouts. Define clear error types for common repository errors (NotFound, DuplicateKey, etc.). Follow Go interface naming conventions with the '-er' suffix. Keep the interface focused on domain needs without infrastructure concerns.",
-        "testStrategy": "This task defines interfaces only, so direct testing is not applicable. However, verify that the interface methods cover all required use cases from the PRD. Review to ensure the interface follows Go best practices and naming conventions.",
-        "priority": "high",
-        "dependencies": [
-          3
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 5,
-        "title": "Implement Domain Services",
-        "description": "Create domain services for business logic that doesn't naturally fit in entities",
-        "details": "Implement PaymentDomainService in domain/payment/service.go to handle complex domain operations that involve multiple aggregates or external rules. Include methods for payment validation, status transition validation, and other business rules. Implement IBAN validation logic using a proper algorithm (check digit validation). Keep domain services focused on pure business logic without infrastructure dependencies. Use dependency injection for any required repositories or other services.",
-        "testStrategy": "Create unit tests for all domain service methods. Test validation logic with various input combinations. Mock any dependencies using gomock. Verify that business rules are correctly implemented and enforced.",
-        "priority": "medium",
-        "dependencies": [
-          3,
-          4
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 6,
-        "title": "Define Application Layer Commands and Handlers",
-        "description": "Create command objects and handlers for use case orchestration",
-        "details": "Implement CreatePaymentCommand and UpdatePaymentStatusCommand in application/commands/ directory. Each command should be an immutable struct with all required data. Implement corresponding handlers (CreatePaymentHandler, UpdatePaymentStatusHandler) that orchestrate domain operations. Use the command pattern to encapsulate use case inputs. Handlers should coordinate between repositories and domain services without containing business logic. Use context.Context for proper cancellation support. Implement proper error handling and return appropriate application errors.",
-        "testStrategy": "Write unit tests for command handlers. Mock all dependencies (repositories, services) using gomock. Test happy paths and error scenarios. Verify that handlers correctly orchestrate domain operations without duplicating business logic.",
-        "priority": "high",
-        "dependencies": [
-          4,
-          5
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 7,
-        "title": "Implement Application Layer Queries and Handlers",
-        "description": "Create query objects and handlers for data retrieval operations",
-        "details": "Implement GetPaymentQuery in application/queries/get_payment.go with corresponding handler. Create query DTOs (Data Transfer Objects) for returning data to presentation layer. Implement proper error handling for not found scenarios and other errors. Use context.Context for cancellation support. Keep query handlers focused on data retrieval without business logic. Use dependency injection for repositories.",
-        "testStrategy": "Create unit tests for query handlers. Mock repository dependencies using gomock. Test scenarios including found items, not found items, and error conditions. Verify correct DTO mapping and error handling.",
-        "priority": "medium",
-        "dependencies": [
-          4,
-          5
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 8,
-        "title": "Define Application Layer Ports",
-        "description": "Create interfaces for external dependencies required by the application layer",
-        "details": "Define interfaces in application/ports/ directory: PaymentPersister for dual persistence operations and XMLGenerator for XML file generation. Follow interface segregation principle with focused interfaces. Use Go naming conventions with '-er' suffix. These interfaces will be implemented by the infrastructure layer but used by the application layer, following dependency inversion principle. Include proper documentation comments for each interface method.",
-        "testStrategy": "This task defines interfaces only, so direct testing is not applicable. Review interfaces for completeness and adherence to SOLID principles. Ensure they capture all requirements from the PRD.",
-        "priority": "high",
-        "dependencies": [
-          6,
-          7
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 9,
-        "title": "Implement Application Services",
-        "description": "Create application services to orchestrate use cases and domain operations",
-        "details": "Implement PaymentService in application/services/payment_service.go to orchestrate payment operations. Include methods that use command and query handlers. Implement proper error handling and logging. Use dependency injection for handlers and other dependencies. Application services should be the primary entry point for the infrastructure layer to access application functionality. Use context.Context for cancellation support and request tracing.",
-        "testStrategy": "Write unit tests for application services. Mock all dependencies (command handlers, query handlers). Test happy paths and error scenarios. Verify proper orchestration and error handling.",
-        "priority": "medium",
-        "dependencies": [
-          6,
-          7,
-          8
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 10,
-        "title": "Setup SQLite Database Schema",
-        "description": "Create SQLite database schema for payment records with proper indexes",
-        "details": "Implement database schema creation in infrastructure/persistence/sqlite/schema.go. Create payments table with fields for id, debtor_iban, debtor_name, creditor_iban, creditor_name, amount, currency, idempotency_key, status, created_at, updated_at. Add appropriate indexes for id (primary key), idempotency_key (unique), and status. Use github.com/mattn/go-sqlite3 v1.14.17 as the SQLite driver. Implement proper migration mechanism for schema updates. Use parameterized SQL to prevent SQL injection. Include proper error handling and logging.",
-        "testStrategy": "Create integration tests that verify schema creation. Test that indexes are properly created. Verify constraints like unique idempotency_key. Use an in-memory SQLite database for testing.",
-        "priority": "high",
-        "dependencies": [
-          1
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 11,
-        "title": "Implement SQLite Repository",
-        "description": "Create SQLite implementation of the payment repository interface",
-        "details": "Implement SQLitePaymentRepository in infrastructure/persistence/sqlite/payment_repository.go that satisfies the PaymentRepository interface. Use github.com/mattn/go-sqlite3 v1.14.17 and database/sql package. Implement all CRUD operations with proper error handling. Use prepared statements for all queries. Implement connection pooling with appropriate settings. Map between domain entities and database rows. Handle SQLite-specific error codes and translate to domain errors. Use context.Context for cancellation support and timeouts.",
-        "testStrategy": "Create integration tests for the repository implementation. Test all CRUD operations. Verify error handling for not found, duplicates, etc. Test transaction support. Use an in-memory SQLite database for testing.",
-        "priority": "high",
-        "dependencies": [
-          4,
-          10
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 12,
-        "title": "Implement XML File Generator",
-        "description": "Create XML file generation for payment records",
-        "details": "Implement XMLPaymentGenerator in infrastructure/persistence/xml/payment_xml_generator.go that satisfies the XMLGenerator interface. Use encoding/xml package for XML generation. Create a simple, readable XML structure for payment data. Implement proper file system operations with error handling. Use os package for file operations with proper permissions. Generate unique filenames based on payment ID. Implement proper directory structure for XML files. Handle file system errors and translate to domain errors. Use context.Context for cancellation support.",
-        "testStrategy": "Create unit tests for XML generation. Verify XML structure matches requirements. Test file system operations with a temporary directory. Test error handling for file system errors.",
-        "priority": "high",
-        "dependencies": [
-          8
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 13,
-        "title": "Implement Dual Persistence Transaction Manager",
-        "description": "Create transaction manager for atomic operations across SQLite and XML",
-        "details": "Implement DualPersistenceManager in infrastructure/persistence/transaction_manager.go that coordinates transactions between SQLite and XML storage. Implement the PaymentPersister interface from application/ports. Use database/sql transactions for SQLite. Implement a rollback mechanism for XML files (delete on failure). Ensure atomicity: both operations succeed or both fail. Handle partial failures with proper cleanup. Use context.Context for cancellation support and timeouts. Implement proper error handling and logging.",
-        "testStrategy": "Create integration tests for dual persistence. Test atomic success cases. Test rollback scenarios (SQLite fails, XML fails). Verify no partial states exist after failures. Use an in-memory SQLite database and temporary directory for testing.",
-        "priority": "high",
-        "dependencies": [
-          11,
-          12
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 14,
-        "title": "Implement JSON Schema Validation",
-        "description": "Create JSON schema validation for payment requests",
-        "details": "Implement JSONSchemaValidator in infrastructure/validation/json_schema_validator.go. Use github.com/xeipuuv/gojsonschema v1.2.0 for JSON schema validation. Define payment request schema according to PRD requirements (debtor_iban, debtor_name, creditor_iban, creditor_name, amount, idempotency_unique_key). Implement validation function that returns detailed validation errors. Map JSON schema validation errors to domain-specific validation errors. Include proper error handling and logging.",
-        "testStrategy": "Create unit tests for JSON schema validation. Test valid and invalid requests. Test specific validation rules (IBAN format, name length, etc.). Verify error messages are clear and helpful.",
-        "priority": "high",
-        "dependencies": [
-          1
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 15,
-        "title": "Implement HTTP Authentication Middleware",
-        "description": "Create basic HTTP authentication middleware for API security",
-        "details": "Implement AuthMiddleware in infrastructure/http/middleware/auth.go. Use net/http package's basic authentication support. Implement Basic HTTP authentication according to RFC 7617. Store credentials in configuration (environment variables or config file). Use secure comparison for password verification (crypto/subtle). Return appropriate HTTP 401 responses for authentication failures. Include proper error handling and security logging. Implement rate limiting using golang.org/x/time/rate with 100 requests/minute per client.",
-        "testStrategy": "Create unit tests for authentication middleware. Test valid credentials, invalid credentials, missing credentials. Test rate limiting functionality. Use httptest package for testing HTTP handlers.",
-        "priority": "high",
-        "dependencies": [
-          1
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 16,
-        "title": "Implement Payment HTTP Handler",
-        "description": "Create HTTP handler for payment API endpoint",
-        "details": "Implement PaymentHandler in infrastructure/http/handlers/payment_handler.go. Create POST /v1/payments endpoint that accepts payment requests. Use net/http package or a lightweight framework like github.com/go-chi/chi v5.0.10. Decode JSON request body. Use JSON schema validator from task #14. Call application service from task #9. Return appropriate HTTP status codes (201 Created, 400 Bad Request, etc.). Include idempotency key handling. Implement proper error handling with consistent error response format. Use context.Context for request cancellation and timeouts.",
-        "testStrategy": "Create unit and integration tests for HTTP handler. Test valid requests, validation failures, authentication failures. Test idempotency (duplicate requests). Use httptest package for testing HTTP handlers.",
-        "priority": "high",
-        "dependencies": [
-          9,
-          14,
-          15
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
         "id": 17,
-        "title": "Implement HTTP Server Setup",
-        "description": "Create HTTP server configuration with proper middleware and routing",
-        "details": "Implement HTTP server setup in infrastructure/http/server.go. Use net/http package or github.com/go-chi/chi v5.0.10 for routing. Configure routes for payment API and health check. Add middleware for authentication, logging, panic recovery, and request ID generation. Implement graceful shutdown with context cancellation. Configure proper timeouts (read timeout, write timeout, idle timeout). Implement health check endpoint (/health) that returns service status. Implement metrics endpoint (/metrics) for basic monitoring. Use dependency injection for handlers and services.",
-        "testStrategy": "Create integration tests for HTTP server. Test route configuration. Test middleware chain. Test graceful shutdown. Use httptest package for testing HTTP server.",
+        "title": "Implement Domain Layer Core Entities",
+        "description": "Create the core domain entities and value objects for the payment processing system following DDD principles.",
+        "details": "1. Create Payment aggregate root in domain/payment/payment.go with rich behavior:\n   - Constructor with validation\n   - Status transition methods (markAsProcessed, markAsFailed)\n   - Business rules enforcement\n2. Implement value objects in domain/shared/:\n   - iban.go: IBAN value object with format validation\n   - amount.go: Amount value object with decimal handling\n   - idempotency_key.go: IdempotencyKey with uniqueness validation\n3. Create PaymentStatus enum in domain/payment/payment_status.go\n4. Define domain errors in domain/shared/errors.go\n5. Define repository interfaces in domain/payment/repository.go\n6. Implement domain services in domain/payment/service.go\n\nUse Go 1.18+ generics where appropriate for type safety. Ensure all domain objects are immutable where possible.",
+        "testStrategy": "Implement comprehensive table-driven tests for all domain entities and value objects. Test validation rules, business logic, and state transitions. Use property-based testing for IBAN validation. Achieve >90% test coverage for domain layer.",
         "priority": "high",
         "dependencies": [
           16
@@ -232,97 +27,92 @@
       },
       {
         "id": 18,
-        "title": "Implement CSV File Monitor",
-        "description": "Create background worker for monitoring bank response CSV file",
-        "details": "Implement CSVFileMonitor in infrastructure/worker/csv_file_monitor.go. Use fsnotify (github.com/fsnotify/fsnotify v1.6.0) to monitor file system changes. Implement polling fallback for file systems that don't support notifications. Monitor bank_response.csv file for changes. Implement proper file locking to prevent concurrent access. Use context.Context for cancellation support. Implement proper error handling and retry mechanism. Use channels to communicate file changes to the processor.",
-        "testStrategy": "Create integration tests for CSV file monitoring. Test file creation, modification. Test file locking. Test cancellation via context. Use a temporary directory for testing.",
-        "priority": "medium",
+        "title": "Design and Implement SQLite Database Schema",
+        "description": "Create the SQLite database schema for payment records with proper indexes and constraints.",
+        "details": "1. Create SQLite database schema with the following tables:\n   - payments: id (primary key), debtor_iban, debtor_name, creditor_iban, creditor_name, amount, currency, idempotency_key (unique), status, created_at, updated_at\n2. Add appropriate indexes:\n   - Unique index on idempotency_key\n   - Index on status for efficient filtering\n   - Index on created_at for chronological queries\n3. Implement database migration using a lightweight migration tool like golang-migrate\n4. Create SQL scripts for:\n   - Schema creation\n   - Indexes\n   - Test data population\n5. Implement connection pooling with proper configuration\n6. Add database health check query\n\nUse parameterized queries throughout to prevent SQL injection. Configure appropriate connection pool settings with timeouts.",
+        "testStrategy": "Create integration tests that verify schema creation, constraint enforcement, and index usage. Test unique constraint on idempotency_key. Verify connection pooling works correctly under load. Test migration scripts for both up and down migrations.",
+        "priority": "high",
         "dependencies": [
-          1
+          16
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 19,
-        "title": "Implement CSV Processor",
-        "description": "Create processor for parsing and processing bank response CSV data",
-        "details": "Implement CSVProcessor in infrastructure/worker/csv_processor.go. Use encoding/csv package for CSV parsing. Parse CSV format with payment ID and status. Validate CSV data format and content. Map CSV status values to domain status values. Call application service to update payment status. Implement batch processing with database transactions (all or nothing). Use context.Context for cancellation support. Implement proper error handling and logging.",
-        "testStrategy": "Create unit tests for CSV processing. Test valid CSV data, invalid formats, missing fields. Test batch processing logic. Mock application service dependencies.",
-        "priority": "medium",
+        "title": "Implement Application Layer Command Handlers",
+        "description": "Create application layer command handlers for processing payment creation and status updates.",
+        "details": "1. Implement CreatePaymentCommand and handler in application/command/create_payment.go:\n   - Define command struct with all payment fields\n   - Implement handler with proper validation\n   - Use context for timeout and cancellation\n   - Return appropriate domain errors\n2. Implement UpdatePaymentStatusCommand and handler in application/command/update_status.go:\n   - Define command struct with payment ID and new status\n   - Implement handler with status transition validation\n   - Use context for timeout and cancellation\n3. Define application interfaces in application/port/:\n   - payment_persister.go: Interface for dual persistence\n   - xml_generator.go: Interface for XML generation\n4. Implement PaymentService in application/service/payment_service.go to orchestrate operations\n\nUse dependency injection for all external dependencies. Implement proper error handling with domain-specific errors.",
+        "testStrategy": "Create unit tests for command handlers using gomock to mock dependencies. Test validation logic, error handling, and successful execution paths. Verify context cancellation is properly handled. Test edge cases like duplicate idempotency keys.",
+        "priority": "high",
         "dependencies": [
-          9,
-          18
+          17
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 20,
-        "title": "Implement Background Worker Manager",
-        "description": "Create manager for background worker goroutines",
-        "details": "Implement WorkerManager in infrastructure/worker/worker_manager.go. Manage lifecycle of background goroutines. Implement graceful shutdown with context cancellation. Use sync.WaitGroup to track active goroutines. Implement proper error handling and recovery for panics. Use channels for communication between goroutines. Implement backoff strategy for retries. Use structured logging for worker events. Coordinate between CSV file monitor and processor.",
-        "testStrategy": "Create integration tests for worker manager. Test startup, shutdown. Test error handling and recovery. Test coordination between monitor and processor. Use mocks for dependencies.",
-        "priority": "medium",
+        "title": "Implement SQLite Repository",
+        "description": "Create the SQLite repository implementation for the payment domain repository interface.",
+        "details": "1. Implement PaymentRepository in infrastructure/persistence/sqlite/payment_repository.go:\n   - Implement Create method with proper transaction handling\n   - Implement FindByID method\n   - Implement FindByIdempotencyKey method\n   - Implement UpdateStatus method\n   - Implement transaction management with context support\n2. Use database/sql package with proper connection pooling\n3. Implement parameterized queries for all database operations\n4. Add proper error handling and mapping to domain errors\n5. Implement timeout handling using context\n6. Add metrics for query execution time\n\nUse prepared statements for better performance. Implement proper resource cleanup with defer statements. Use context for cancellation and timeouts.",
+        "testStrategy": "Create integration tests that verify repository operations against a real SQLite database. Test transaction rollback on error. Test concurrent operations. Verify proper error mapping. Test timeout handling with context cancellation.",
+        "priority": "high",
         "dependencies": [
-          18,
-          19
+          17,
+          18
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 21,
-        "title": "Implement Structured Logging",
-        "description": "Create structured logging system with proper levels and contextual information",
-        "details": "Implement structured logging in infrastructure/logging/logger.go. Use log/slog (Go 1.21+) or github.com/rs/zerolog v1.30.0 for structured JSON logging. Implement log levels (DEBUG, INFO, WARN, ERROR). Include contextual fields (request ID, user ID, payment ID, operation type). Implement correlation ID propagation through context.Context. Configure log output (stdout, file). Implement log sampling for high-volume operations. Create middleware for HTTP request logging. Implement proper error logging with stack traces.",
-        "testStrategy": "Create unit tests for logging functionality. Test log levels, contextual fields. Test correlation ID propagation. Test error logging with stack traces. Verify JSON output format.",
-        "priority": "medium",
+        "title": "Implement XML File Generator",
+        "description": "Create the XML file generator for persisting payment data in XML format.",
+        "details": "1. Implement XMLGenerator in infrastructure/persistence/xml/payment_xml_generator.go:\n   - Implement GenerateXML method to create XML from payment data\n   - Implement SaveXML method to write XML to file system\n   - Use encoding/xml package for XML generation\n   - Implement proper file naming convention\n   - Add file system error handling\n2. Create XML structure matching the requirements\n3. Implement file system operations with proper error handling\n4. Add atomic file write operations to prevent partial writes\n5. Implement directory structure for organizing XML files\n6. Add file cleanup mechanism for old XML files\n\nUse os.WriteFile with temporary file and rename for atomic writes. Implement proper error handling for file system operations.",
+        "testStrategy": "Create unit tests for XML generation logic. Create integration tests for file system operations. Verify XML structure matches requirements. Test error handling for file system failures. Test atomic write operations.",
+        "priority": "high",
         "dependencies": [
-          1
+          17
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 22,
-        "title": "Implement Configuration Management",
-        "description": "Create configuration system for application settings",
-        "details": "Implement configuration management in infrastructure/config/config.go. Support environment variables and configuration files (YAML/JSON). Use github.com/spf13/viper v1.16.0 for configuration management. Define configuration struct with all application settings. Implement validation for configuration values. Support different environments (dev, staging, prod). Implement secure handling of sensitive data. Provide sensible defaults for all settings. Include proper error handling and logging for configuration errors.",
-        "testStrategy": "Create unit tests for configuration loading. Test environment variable overrides. Test configuration file loading. Test validation of configuration values. Test different environments.",
-        "priority": "medium",
+        "title": "Implement Dual Persistence Transaction Manager",
+        "description": "Create a transaction manager that ensures atomic operations across both SQLite and XML persistence.",
+        "details": "1. Implement TransactionManager in infrastructure/persistence/transaction_manager.go:\n   - Define interface for transactional operations\n   - Implement method to execute operations in transaction\n   - Ensure rollback on failure for both SQLite and XML\n   - Implement compensation logic for XML file deletion on rollback\n2. Integrate with SQLite transaction mechanism\n3. Implement file system rollback mechanism\n4. Add proper error handling and logging\n5. Implement retry mechanism for transient failures\n\nUse a two-phase approach: prepare both operations, then commit both. On failure, roll back both operations. Use proper error handling and logging for rollback operations.",
+        "testStrategy": "Create integration tests that verify atomic operations across both persistence mechanisms. Test rollback scenarios. Test partial failures. Verify no orphaned records between SQLite and XML. Test retry mechanism for transient failures.",
+        "priority": "high",
         "dependencies": [
-          1
+          20,
+          21
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 23,
-        "title": "Implement Application Bootstrap",
-        "description": "Create main application entry point with proper initialization",
-        "details": "Implement application bootstrap in cmd/server/main.go. Initialize configuration from task #22. Set up structured logging from task #21. Initialize database connection and schema. Create dependency injection container (manual or using github.com/uber-go/dig). Initialize application services, repositories, and handlers. Start HTTP server from task #17. Start background workers from task #20. Implement graceful shutdown with signal handling (SIGINT, SIGTERM). Use context.Context for cancellation propagation. Include proper error handling and logging.",
-        "testStrategy": "Create integration tests for application bootstrap. Test initialization sequence. Test graceful shutdown. Test error handling during initialization. Use mocks for external dependencies.",
-        "priority": "high",
+        "title": "Implement JSON Schema Validation",
+        "description": "Create JSON schema validation for payment request validation.",
+        "details": "1. Define JSON schema for payment request in infrastructure/http/schema/payment_schema.json:\n   - debtor_iban (string, IBAN format)\n   - debtor_name (string, 3-30 chars)\n   - creditor_iban (string, IBAN format)\n   - creditor_name (string, 3-30 chars)\n   - amount (number)\n   - idempotency_unique_key (string, 10 chars)\n2. Implement validator in infrastructure/http/validator/payment_validator.go\n3. Use a lightweight JSON schema validation library like github.com/xeipuuv/gojsonschema (v1.2.0)\n4. Implement custom validation for IBAN format\n5. Add detailed error messages for validation failures\n6. Implement validation middleware for HTTP handlers\n\nReturn detailed validation errors with field names and reasons. Implement custom validators for domain-specific rules.",
+        "testStrategy": "Create table-driven tests for validation logic. Test valid and invalid requests. Test edge cases like boundary values. Verify error messages are clear and helpful. Test custom validators for IBAN format.",
+        "priority": "medium",
         "dependencies": [
-          17,
-          20,
-          21,
-          22
+          16
         ],
         "status": "pending",
         "subtasks": []
       },
       {
         "id": 24,
-        "title": "Implement Comprehensive Error Handling",
-        "description": "Create consistent error handling across all layers",
-        "details": "Implement comprehensive error handling in internal/shared/errors.go. Define error types for different categories (validation errors, not found errors, conflict errors, system errors). Implement error wrapping using fmt.Errorf with %w. Create utility functions for error handling. Implement HTTP error responses with consistent format. Map domain and application errors to appropriate HTTP status codes. Include error codes for client reference. Implement proper logging for different error types. Ensure sensitive information is not exposed in error messages.",
-        "testStrategy": "Create unit tests for error handling. Test error wrapping and unwrapping. Test mapping between error types and HTTP status codes. Test error response format. Verify sensitive information is not exposed.",
+        "title": "Implement HTTP Authentication Middleware",
+        "description": "Create HTTP basic authentication middleware for securing API endpoints.",
+        "details": "1. Implement authentication middleware in infrastructure/http/middleware/auth.go:\n   - Parse Authorization header\n   - Validate credentials against configuration\n   - Implement proper error handling for missing or invalid credentials\n   - Add logging for authentication failures\n2. Use environment variables for credential configuration\n3. Implement secure credential comparison to prevent timing attacks\n4. Add rate limiting for failed authentication attempts\n5. Implement proper HTTP status codes (401 for authentication failures)\n\nUse the standard library's subtle.ConstantTimeCompare for secure credential comparison. Implement proper logging for security events.",
+        "testStrategy": "Create unit tests for authentication middleware. Test valid credentials, invalid credentials, missing credentials. Test rate limiting for failed attempts. Verify proper HTTP status codes and headers in responses.",
         "priority": "high",
         "dependencies": [
-          3,
-          6,
           16
         ],
         "status": "pending",
@@ -330,13 +120,156 @@
       },
       {
         "id": 25,
-        "title": "Implement Integration Tests",
-        "description": "Create end-to-end integration tests for complete workflows",
-        "details": "Implement integration tests in test/integration/ directory. Create end-to-end tests for payment submission flow. Create end-to-end tests for payment status update flow. Use docker-compose for test environment setup. Implement test fixtures and helpers. Use github.com/stretchr/testify v1.8.4 for assertions. Implement database cleanup between tests. Test idempotency with duplicate requests. Test error scenarios and edge cases. Verify data consistency between SQLite and XML storage. Test background worker processing of CSV files.",
-        "testStrategy": "Run integration tests in CI pipeline. Verify all workflows function correctly end-to-end. Test with various input data and scenarios. Verify system behaves according to PRD requirements.",
+        "title": "Implement Payment API Endpoint",
+        "description": "Create the REST API endpoint for payment submission.",
+        "details": "1. Implement PaymentHandler in infrastructure/http/handler/payment_handler.go:\n   - Implement POST /v1/payments endpoint\n   - Parse and validate request body\n   - Convert request to command\n   - Call application service\n   - Format response with payment ID\n   - Implement proper error handling\n2. Use standard library's net/http package\n3. Implement middleware chain with authentication and logging\n4. Add request ID generation for correlation\n5. Implement proper HTTP status codes\n6. Add response headers (Content-Type, etc.)\n\nUse context for request cancellation and timeouts. Implement proper error handling with appropriate HTTP status codes.",
+        "testStrategy": "Create unit tests for handler logic using httptest package. Test successful requests, validation failures, authentication failures. Verify proper HTTP status codes and response bodies. Test request cancellation and timeouts.",
+        "priority": "high",
+        "dependencies": [
+          19,
+          23,
+          24
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "Implement Health Check Endpoint",
+        "description": "Create a health check endpoint for monitoring system health.",
+        "details": "1. Implement HealthHandler in infrastructure/http/handler/health_handler.go:\n   - Implement GET /health endpoint\n   - Check database connectivity\n   - Check file system access\n   - Return health status in JSON format\n   - Include component status details\n2. Implement proper error handling\n3. Add response caching to prevent frequent checks\n4. Include version information in response\n5. Add uptime information\n\nReturn detailed component status information. Use proper HTTP status codes (200 for healthy, 503 for unhealthy).",
+        "testStrategy": "Create unit tests for health check logic. Test scenarios with all components healthy and with various component failures. Verify proper HTTP status codes and response format.",
         "priority": "medium",
         "dependencies": [
-          23
+          20,
+          21
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Implement Metrics Endpoint",
+        "description": "Create a metrics endpoint for exposing application metrics.",
+        "details": "1. Implement MetricsHandler in infrastructure/http/handler/metrics_handler.go:\n   - Implement GET /metrics endpoint\n   - Expose request count, response times, error rates\n   - Expose business metrics (payment creation rate, success/failure ratios)\n   - Format metrics in Prometheus-compatible format\n2. Implement metrics collection throughout the application\n3. Use a lightweight metrics library like github.com/prometheus/client_golang (v1.16.0)\n4. Add labels for detailed metrics analysis\n5. Implement histogram for response time distribution\n\nUse middleware to collect request metrics. Implement business metrics in application services.",
+        "testStrategy": "Create unit tests for metrics collection logic. Verify metrics are properly incremented. Test metric labels. Verify Prometheus-compatible format.",
+        "priority": "low",
+        "dependencies": [
+          25
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Implement Structured Logging",
+        "description": "Implement structured logging throughout the application.",
+        "details": "1. Implement logging infrastructure in infrastructure/logging/logger.go:\n   - Use Go's standard library slog package (introduced in Go 1.21)\n   - Configure JSON output format\n   - Define log levels (DEBUG, INFO, WARN, ERROR)\n   - Implement context-aware logging with request ID\n   - Add common fields (timestamp, service name, etc.)\n2. Implement logging middleware for HTTP requests\n3. Add logging throughout application components\n4. Implement log level configuration via environment variables\n5. Add performance logging for slow operations\n\nUse structured logging with consistent field names. Include contextual information in all log entries.",
+        "testStrategy": "Create unit tests for logging logic. Verify log format and content. Test different log levels. Verify context values are properly included in log entries.",
+        "priority": "medium",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Implement Background Worker for CSV Processing",
+        "description": "Create a background worker for processing bank response CSV files.",
+        "details": "1. Implement StatusUpdater in infrastructure/worker/status_updater.go:\n   - Implement file monitoring logic using fsnotify (github.com/fsnotify/fsnotify v1.6.0)\n   - Parse CSV file using encoding/csv package\n   - Process CSV rows in batches\n   - Update payment status in database\n   - Implement proper error handling and retry logic\n2. Use goroutine for background processing\n3. Implement graceful shutdown\n4. Add file locking to prevent concurrent processing\n5. Implement batch processing with transactions\n6. Add metrics for processed records\n\nUse a channel-based approach for processing CSV rows. Implement proper error handling and logging for background processing.",
+        "testStrategy": "Create integration tests for CSV processing logic. Test file monitoring, parsing, and database updates. Test error handling and retry logic. Verify atomic batch processing. Test graceful shutdown.",
+        "priority": "high",
+        "dependencies": [
+          20
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Implement Configuration Management",
+        "description": "Create configuration management for application settings.",
+        "details": "1. Implement configuration in infrastructure/config/config.go:\n   - Define configuration struct with all settings\n   - Load configuration from environment variables\n   - Implement validation for required settings\n   - Provide sensible defaults\n   - Add support for configuration file (optional)\n2. Include settings for:\n   - HTTP server (port, timeouts)\n   - Database (connection string, pool size)\n   - File system (paths for XML and CSV)\n   - Authentication (credentials)\n   - Logging (level, format)\n3. Implement validation for all settings\n4. Add logging of configuration at startup (excluding sensitive values)\n\nUse environment variables as the primary configuration source. Implement proper validation for all settings.",
+        "testStrategy": "Create unit tests for configuration loading and validation. Test with valid and invalid configurations. Test default values. Verify sensitive values are not logged.",
+        "priority": "medium",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Implement Error Handling Framework",
+        "description": "Create a comprehensive error handling framework for the application.",
+        "details": "1. Implement error types in domain/shared/errors.go:\n   - Define error categories (ValidationError, BusinessError, SystemError)\n   - Implement error wrapping for context preservation\n   - Add error codes for client-friendly messages\n2. Implement error handling middleware in infrastructure/http/middleware/error_handler.go:\n   - Convert domain errors to HTTP responses\n   - Map error types to HTTP status codes\n   - Format error responses in consistent JSON format\n   - Hide internal details in production\n3. Implement logging for all errors\n4. Add stack traces for system errors\n\nUse Go 1.13+ error wrapping with errors.Is and errors.As for error type checking. Implement proper error context preservation.",
+        "testStrategy": "Create unit tests for error handling logic. Test error wrapping and unwrapping. Test error type mapping to HTTP status codes. Verify error response format. Test different error categories.",
+        "priority": "medium",
+        "dependencies": [
+          16,
+          28
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Implement Graceful Shutdown",
+        "description": "Implement graceful shutdown for the application.",
+        "details": "1. Implement shutdown logic in cmd/server/main.go:\n   - Capture SIGTERM and SIGINT signals\n   - Initiate graceful shutdown of HTTP server\n   - Close database connections\n   - Stop background workers\n   - Wait for in-flight requests to complete\n   - Log shutdown progress\n2. Implement timeout for shutdown process\n3. Add health check status update during shutdown\n4. Implement connection draining for HTTP server\n\nUse context cancellation for coordinating shutdown across components. Implement proper resource cleanup.",
+        "testStrategy": "Create integration tests for graceful shutdown. Test shutdown with in-flight requests. Verify resources are properly cleaned up. Test shutdown timeout.",
+        "priority": "medium",
+        "dependencies": [
+          25,
+          29
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 33,
+        "title": "Implement Idempotency Key Validation",
+        "description": "Implement idempotency key validation to prevent duplicate payments.",
+        "details": "1. Enhance PaymentRepository with FindByIdempotencyKey method\n2. Implement idempotency check in CreatePaymentCommand handler:\n   - Check if payment with same idempotency key exists\n   - Return existing payment ID if found\n   - Proceed with creation if not found\n3. Add proper error handling for duplicate keys\n4. Implement database index on idempotency_key column\n5. Add metrics for duplicate requests\n\nUse database unique constraint as the ultimate guarantee against duplicates. Implement proper error handling for constraint violations.",
+        "testStrategy": "Create integration tests for idempotency logic. Test duplicate requests with same idempotency key. Verify same response is returned for duplicate requests. Test concurrent requests with same idempotency key.",
+        "priority": "high",
+        "dependencies": [
+          20,
+          25
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "Implement Circuit Breaker for External Dependencies",
+        "description": "Implement circuit breaker pattern for external dependencies.",
+        "details": "1. Implement CircuitBreaker in infrastructure/resilience/circuit_breaker.go:\n   - Define interface for circuit breaker\n   - Implement state machine (closed, open, half-open)\n   - Add failure counting and thresholds\n   - Implement timeout for recovery\n   - Add metrics for circuit breaker state\n2. Apply circuit breaker to file system operations\n3. Apply circuit breaker to database operations\n4. Implement fallback mechanisms for critical operations\n\nUse a lightweight circuit breaker library like github.com/sony/gobreaker (v0.5.0). Implement proper logging for circuit breaker state changes.",
+        "testStrategy": "Create unit tests for circuit breaker logic. Test state transitions. Test failure counting and recovery. Verify metrics are properly updated. Test fallback mechanisms.",
+        "priority": "low",
+        "dependencies": [
+          20,
+          21
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Implement Application Assembly and Dependency Injection",
+        "description": "Create application assembly with proper dependency injection.",
+        "details": "1. Implement application assembly in cmd/server/main.go:\n   - Create all components with proper dependencies\n   - Wire up layers (domain, application, infrastructure)\n   - Configure HTTP server and routes\n   - Start background workers\n   - Initialize database connection\n2. Use constructor injection for dependencies\n3. Implement clean separation of concerns\n4. Add proper error handling for initialization failures\n\nUse manual dependency injection without external frameworks. Implement proper resource initialization order.",
+        "testStrategy": "Create integration tests for application assembly. Verify all components are properly initialized. Test initialization failures. Verify proper dependency injection.",
+        "priority": "high",
+        "dependencies": [
+          19,
+          20,
+          21,
+          22,
+          25,
+          29,
+          30
         ],
         "status": "pending",
         "subtasks": []
@@ -344,7 +277,7 @@
     ],
     "metadata": {
       "created": "2025-09-16T18:05:49.277Z",
-      "updated": "2025-09-16T18:05:49.277Z",
+      "updated": "2025-09-17T06:52:20.121Z",
       "description": "Tasks for master context"
     }
   }

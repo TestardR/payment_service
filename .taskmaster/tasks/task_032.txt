@@ -1,0 +1,22 @@
+# Task ID: 32
+# Title: Implement Graceful Shutdown
+# Status: pending
+# Dependencies: 25, 29
+# Priority: medium
+# Description: Implement graceful shutdown for the application.
+# Details:
+1. Implement shutdown logic in cmd/server/main.go:
+   - Capture SIGTERM and SIGINT signals
+   - Initiate graceful shutdown of HTTP server
+   - Close database connections
+   - Stop background workers
+   - Wait for in-flight requests to complete
+   - Log shutdown progress
+2. Implement timeout for shutdown process
+3. Add health check status update during shutdown
+4. Implement connection draining for HTTP server
+
+Use context cancellation for coordinating shutdown across components. Implement proper resource cleanup.
+
+# Test Strategy:
+Create integration tests for graceful shutdown. Test shutdown with in-flight requests. Verify resources are properly cleaned up. Test shutdown timeout.

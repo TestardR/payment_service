@@ -1,14 +1,18 @@
 # Payment Processing System - Product Requirements Document
 
 ## Overview
-This project implements a payment processing system that acts as an intermediary between clients and a banking system. The system receives payment requests via REST API, persists them in dual storage (SQLite database and XML files), 
-and processes bank responses to update payment statuses. The system implements ACID transaction principles for data consistency.
+This project implements a payment processing system that acts as an intermediary between clients and a banking system. The system receives payment requests via REST API, 
+persists them in dual storage (SQLite database and XML files), and processes bank responses to update payment statuses. The system implements ACID transaction principles for data consistency.
 
 **Problem Solved**: Provides a reliable, transactional payment processing gateway that ensures data consistency across multiple storage systems.
 
 **Target Audience**: Financial institutions, payment service providers, and businesses requiring secure payment processing with dual persistence and background status updates.
 
 **Architecture**: Single service application with background worker for CSV processing - no distributed systems or message queues required.
+
+---
+
+# FUNCTIONAL REQUIREMENTS
 
 ## Core Features
 
@@ -20,7 +24,7 @@ and processes bank responses to update payment statuses. The system implements A
 - **Response**: Immediate acknowledgment with payment ID
 
 ### 2. Dual Persistence System
-- **SQLite Database**: Primary storage for payment records with full ACID compliance
+- **SQLite Database**: Primary storage for payment records with ACID transactions
 - **XML File System**: Simple XML files simulating bank file system
 - **Transactional Integrity**: Both storage operations must succeed or both must fail
 - **Data Consistency**: Atomic operations ensure no partial writes
@@ -113,15 +117,15 @@ internal/
 │       ├── idempotency_key.go  # IdempotencyKey value object
 │       └── errors.go           # Domain-specific errors
 ├── application/
-│   ├── commands/
+│   ├── command/
 │   │   ├── create_payment.go    # CreatePaymentCommand and handler
 │   │   └── update_status.go     # UpdatePaymentStatusCommand and handler
-│   ├── queries/
+│   ├── query/
 │   │   └── get_payment.go       # Query handlers
-│   ├── ports/                   # Application interfaces (idiomatic naming)
+│   ├── port/                    # Application interfaces (idiomatic naming)
 │   │   ├── payment_persister.go    # PaymentPersister interface
 │   │   └── xml_generator.go        # XMLGenerator interface
-│   └── services/
+│   └── service/
 │       └── payment_service.go   # Application service (orchestration)
 └── infrastructure/
     ├── persistence/
@@ -130,7 +134,7 @@ internal/
     │   └── xml/
     │       └── payment_xml_generator.go
     ├── http/
-    │   ├── handlers/
+    │   ├── handler/
     │   │   └── payment_handler.go
     │   └── middleware/
     │       └── auth.go
@@ -168,32 +172,6 @@ internal/
 - **Outbound**: File system integration for XML generation
 - **External**: Bank response file monitoring
 
-### Infrastructure Requirements
-- Go runtime version 1.24.4
-- SQLite database engine
-- File system access for XML storage
-- Background worker process capability
-- HTTP server with authentication support
-
-### Go Development Tools
-- **Code Formatting**: gofmt for consistent code formatting
-- **Static Analysis**: go vet, golint, staticcheck for code quality
-- **Dependency Management**: Go modules (go.mod, go.sum)
-- **Testing Tools**: Built-in testing package, testify for assertions
-- **Mock Generation**: gomock for generating interface mocks
-- **Build Tools**: Standard go build, go install commands
-- **Documentation**: godoc for API documentation generation
-- **Structured Logging**: Use structured logging library (e.g., slog, logrus, or zap)
-
-### Software Architecture Requirements
-- **Clean Architecture Pattern**: Implement hexagonal architecture within `internal/` folder
-- **Domain-Driven Design**: Business logic encapsulated within domain models and entities
-- **Rich Domain Models**: Domain entities contain business behavior, not just data
-- **Layer Separation**: Clear separation between domain, infrastructure, and application layers
-- **Dependency Direction**: Dependencies point inward toward domain layer
-- **Interface-Based Design**: Use interfaces to decouple layers and enable testing
-- **Ubiquitous Language**: Consistent terminology between domain experts and code
-
 ## Development Roadmap
 
 ### Phase 1: Core API and Persistence (MVP)
@@ -203,7 +181,7 @@ internal/
 - **HTTP Layer**: Idiomatic HTTP handlers with middleware and proper error responses
 - **Testing**: Table-driven unit tests with gomock-generated mocks for all interfaces
 - **Integration**: Atomic dual persistence using Go's database/sql transaction patterns
-- **Go Standards**: Setup go.mod, implement gofmt/go vet compliance, proper package structure
+- **Go Standards**: Setup go.mod, implement gofmt/go vet, proper package structure
 
 ### Phase 2: Background Processing
 - **Domain Layer**: Payment status update with proper state transitions
@@ -243,7 +221,7 @@ internal/
 
 ### Persistence Layer (Depends on Foundation + API)
 1. **Database Operations**: CRUD operations for payments
-2. **XML Generation**: ISO 20022 compliant XML creation
+2. **XML Generation**: Simple XML file creation
 3. **Transaction Management**: Atomic dual persistence
 4. **File System Management**: XML file organization
 
@@ -253,91 +231,89 @@ internal/
 3. **Status Updates**: Database update operations
 4. **Error Recovery**: Failed operation handling
 
-## Non-Functional Requirements
+---
 
-### Performance
-- **Response Time**: API responses under 500ms for 95th percentile
-- **Throughput**: Handle 100 concurrent payment requests
-- **Worker Processing**: Process bank responses within 30 seconds
+# NON-FUNCTIONAL REQUIREMENTS
 
-### Security
+## Essential Requirements (MVP)
+
+### Basic Performance
+- **Response Time**: API responses under 2 seconds
+- **Worker Processing**: Process bank responses within 1 minute
+
+### Security Essentials
 - **Authentication**: Basic HTTP authentication for all API endpoints
-- **Data Validation**: Strict input validation and sanitization
-- **SQL Injection Prevention**: Parameterized queries only
-- **File System Security**: Restricted access to XML storage directory
-- **Sensitive Data**: No sensitive data (passwords, keys) in logs or error messages
-- **Input Sanitization**: Prevent XML injection and path traversal attacks
-- **Rate Limiting**: Basic rate limiting to prevent abuse (100 requests/minute per client)
+- **Data Validation**: Basic input validation and sanitization
+- **SQL Injection Prevention**: Use parameterized queries only
+- **No Sensitive Data in Logs**: Avoid logging passwords, keys, or sensitive payment data
 
-### Reliability
-- **ACID Compliance**: All database operations must be ACID compliant
+### Reliability Essentials
+- **ACID Transactions**: All database operations use ACID transactions
 - **Atomic Operations**: Dual persistence must be atomic (all or nothing)
-- **Error Recovery**: Graceful handling of partial failures
 - **Data Consistency**: No orphaned records between SQLite and XML
 - **Idempotency**: Duplicate requests with same idempotency key return same result
 - **Timeout Handling**: Proper timeouts for database and file operations (5 seconds max)
 - **Circuit Breaker**: Basic circuit breaker pattern for external dependencies
 
-### Scalability
+## Scalability Requirements
 - **Database**: SQLite suitable for moderate transaction volumes
 - **File System**: Efficient XML file organization and cleanup
 - **Worker Scaling**: Single worker process with potential for horizontal scaling
 
-### Availability
+## Availability Requirements
 - **Uptime**: 99.9% availability during business hours
 - **Error Handling**: Graceful degradation on component failures
 - **Recovery**: Automatic recovery from transient failures
 - **Health Checks**: HTTP health check endpoint (/health) for monitoring
 - **Graceful Shutdown**: Proper cleanup on SIGTERM/SIGINT signals
 
-### Maintainability
+## Maintainability Requirements
 - **Code Quality**: Clean, well-documented code following Go best practices
 - **Structured Logging**: JSON-formatted logs with consistent fields and levels
 - **Configuration**: Externalized configuration management
 - **Testing**: Comprehensive unit and integration test coverage
 
-### Configuration Management
-- **Environment-Based Config**: Support for dev/staging/prod environments
+## Infrastructure Requirements
+- Go runtime version 1.24.4
+- SQLite database engine
+- File system access for XML storage
+- Background worker process capability
+- HTTP server with authentication support
+
+## Configuration Management Requirements
 - **Configuration Validation**: Validate all config on application startup
-- **Sensitive Data**: Secure handling of database credentials and auth tokens
+- **Sensitive Data**: Secure handling of database credentials
 - **Environment Variables**: Use environment variables for deployment-specific settings
-- **Configuration Files**: Support for YAML/JSON configuration files
 - **Default Values**: Sensible defaults for all configuration options
 
-### Monitoring & Observability
+## Monitoring & Observability Requirements
 - **Health Endpoint**: /health endpoint returning service status and dependencies
 - **Metrics Endpoint**: /metrics endpoint for Prometheus-compatible metrics
 - **Key Metrics**: Track request count, response times, error rates, active connections
 - **Business Metrics**: Payment creation rate, success/failure ratios
-- **Resource Monitoring**: Memory usage, goroutine count, database connections
 
-### API Standards
+## API Standards Requirements
 - **HTTP Status Codes**: Proper use of 2xx, 4xx, 5xx status codes
 - **Content-Type**: Enforce application/json for requests and responses
 - **API Versioning**: Include version in URL path (/v1/payments)
 - **Request Validation**: Return 400 with detailed validation errors
 - **Response Format**: Consistent JSON response structure across all endpoints
 
-### Error Handling Standards
+## Error Handling Standards
 - **Standardized Errors**: Consistent error response format with error codes
 - **Error Categories**: Business errors, validation errors, system errors
 - **Client-Friendly Messages**: User-readable error messages without sensitive details
-- **Error Logging**: Log all errors with sufficient context for debugging
-- **Error Codes**: Unique error codes for different failure scenarios
+- **Error Logging**: Log system errors with sufficient context for debugging
 
-### Structured Logging Requirements
+## Structured Logging Requirements
 - **Log Format**: JSON structured logs for machine readability
 - **Log Levels**: DEBUG, INFO, WARN, ERROR with appropriate usage
 - **Contextual Fields**: Include request ID, user ID, payment ID, operation type
 - **Correlation IDs**: Track requests across service boundaries
 - **Performance Metrics**: Log response times, database query durations
-- **Security Logging**: Log authentication attempts, authorization failures
-- **Business Events**: Log payment creation, status changes, validation failures
 - **Error Context**: Include stack traces and error chains for debugging
-- **Log Sampling**: Implement log sampling for high-volume operations
-- **Log Rotation**: Proper log file rotation and retention policies
 
-### Testing Requirements
+## Testing Requirements
 - **Unit Testing**: All business logic must be unit tested
 - **Table-Driven Tests**: Use table-driven test pattern as the standard approach
 - **Interface-Based Testing**: Use dependency injection and interfaces for testability
@@ -345,10 +321,9 @@ internal/
 - **Test Coverage**: Minimum 80% code coverage for domain and application layers
 - **Layer Isolation**: Tests should not cross architectural boundaries
 - **Mock Dependencies**: Infrastructure dependencies mocked using gomock-generated mocks
-- **Integration Testing**: End-to-end testing of complete workflows
 - **Test Structure**: Follow Go testing conventions with `_test.go` files
 
-### Code Quality Standards
+## Code Quality Standards
 - **Idiomatic Go**: Follow Go best practices and community conventions
 - **Go Standards**: Use gofmt, go vet, golint, and staticcheck for code quality
 - **Clean Architecture**: Strict adherence to dependency inversion principle
@@ -356,7 +331,59 @@ internal/
 - **Error Handling**: Proper Go error handling patterns with explicit error checking
 - **Documentation**: Comprehensive godoc comments for all public APIs and packages
 
-### Idiomatic Go Requirements
+## Go Development Tools Requirements
+- **Code Formatting**: gofmt for consistent code formatting
+- **Static Analysis**: go vet, golint, staticcheck for code quality
+- **Dependency Management**: Go modules (go.mod, go.sum)
+- **Testing Tools**: Built-in testing package, testify for assertions
+- **Mock Generation**: gomock for generating interface mocks
+- **Build Tools**: Standard go build, go install commands
+- **Documentation**: godoc for API documentation generation
+- **Structured Logging**: Use structured logging library (e.g., slog, logrus, or zap)
+
+## Development Workflow Requirements
+- **Small Pull Requests**: Keep PRs focused and small (ideally <300 lines of code) for easier review
+- **Single Responsibility**: Each PR should implement one feature, fix one bug, or make one type of change
+- **Atomic Changes**: PRs should be self-contained and not break existing functionality
+- **Clear Descriptions**: PR descriptions should clearly explain what changed and why
+- **Review-Friendly**: Structure commits to tell a story and make review easier
+- **PR Templates**: Follow consistent PR description templates for better communication
+- **Conventional Commits**: Use conventional commits for consistent commit messages
+
+## Conventional Commits Standard
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for all commit messages:
+
+**Format**: `<type>[optional scope]: <description>`
+
+**Types**:
+- `feat`: A new feature for the user
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools and libraries
+
+**Examples**:
+- `feat(api): add POST /payments endpoint with validation`
+- `fix(db): resolve SQLite connection pool deadlock`
+- `docs(readme): update installation instructions`
+- `test(payment): add table-driven tests for IBAN validation`
+- `refactor(domain): extract payment status to value object`
+- `chore(deps): update go modules to latest versions`
+```
+
+## Software Architecture Requirements
+- **Clean Architecture Pattern**: Implement hexagonal architecture within `internal/` folder
+- **Domain-Driven Design**: Business logic encapsulated within domain models and entities
+- **Rich Domain Models**: Domain entities contain business behavior, not just data
+- **Layer Separation**: Clear separation between domain, infrastructure, and application layers
+- **Dependency Direction**: Dependencies point inward toward domain layer
+- **Interface-Based Design**: Use interfaces to decouple layers and enable testing
+- **Ubiquitous Language**: Consistent terminology between domain experts and code
+
+## Idiomatic Go Requirements
 - **Package Organization**: Clear, single-purpose packages with descriptive names
 - **Naming Conventions**: Follow Go naming conventions (camelCase, PascalCase)
 - **Interface Naming**: Use "-er" suffix for interfaces (e.g., PaymentCreator, StatusUpdater)
@@ -368,9 +395,11 @@ internal/
 - **Composition**: Favor composition over inheritance
 - **Receiver Types**: Use pointer receivers for methods that modify state
 
-## Risks and Mitigations
+---
 
-### Technical Challenges
+# RISKS AND MITIGATIONS
+
+## Technical Challenges
 1. **Dual Persistence Atomicity**
    - Risk: Partial writes to SQLite or XML
    - Mitigation: Implement proper transaction management with rollback capabilities
@@ -383,29 +412,30 @@ internal/
    - Risk: SQLite database locks during high concurrency
    - Mitigation: Connection pooling and optimized query patterns
 
-### MVP Scope Definition
+## MVP Scope Definition
 - **Core Focus**: Basic payment processing with dual persistence
 - **Deferred Features**: Advanced monitoring, multiple currencies, complex error recovery
 - **Success Criteria**: Successfully process payments end-to-end with status updates
 
-### Resource Constraints
+## Resource Constraints
 - **Development Time**: Prioritize core functionality over advanced features
 - **Infrastructure**: Start with simple deployment, optimize later
 - **Testing**: Focus on critical path testing for MVP
 
-## Appendix
+---
 
-### Technical Specifications
-- **JSON Schema**: Draft-06 specification compliance
+# APPENDIX
+
+## Technical Specifications
 - **XML Format**: Simple, readable XML structure
 - **Database**: SQLite 3.x
-- **Authentication**: HTTP Basic Authentication (RFC 7617)
+- **Authentication**: HTTP Basic Authentication
 
-### Sample Data Structures
+## Sample Data Structures
 - Request JSON, XML output, and CSV response formats are defined in accompanying sample files
 - Database schema includes proper indexes for performance
 - Error response formats follow REST API best practices
 
-### Compliance Requirements
-- Basic IBAN format validation
-- Data protection and privacy considerations
+## Basic Requirements
+- Simple IBAN format validation
+- Basic data protection practices

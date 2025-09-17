@@ -1,0 +1,22 @@
+# Task ID: 26
+# Title: Implement Health Check Endpoint
+# Status: pending
+# Dependencies: 20, 21
+# Priority: medium
+# Description: Create a health check endpoint for monitoring system health.
+# Details:
+1. Implement HealthHandler in infrastructure/http/handler/health_handler.go:
+   - Implement GET /health endpoint
+   - Check database connectivity
+   - Check file system access
+   - Return health status in JSON format
+   - Include component status details
+2. Implement proper error handling
+3. Add response caching to prevent frequent checks
+4. Include version information in response
+5. Add uptime information
+
+Return detailed component status information. Use proper HTTP status codes (200 for healthy, 503 for unhealthy).
+
+# Test Strategy:
+Create unit tests for health check logic. Test scenarios with all components healthy and with various component failures. Verify proper HTTP status codes and response format.

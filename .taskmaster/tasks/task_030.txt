@@ -1,0 +1,26 @@
+# Task ID: 30
+# Title: Implement Configuration Management
+# Status: pending
+# Dependencies: 16
+# Priority: medium
+# Description: Create configuration management for application settings.
+# Details:
+1. Implement configuration in infrastructure/config/config.go:
+   - Define configuration struct with all settings
+   - Load configuration from environment variables
+   - Implement validation for required settings
+   - Provide sensible defaults
+   - Add support for configuration file (optional)
+2. Include settings for:
+   - HTTP server (port, timeouts)
+   - Database (connection string, pool size)
+   - File system (paths for XML and CSV)
+   - Authentication (credentials)
+   - Logging (level, format)
+3. Implement validation for all settings
+4. Add logging of configuration at startup (excluding sensitive values)
+
+Use environment variables as the primary configuration source. Implement proper validation for all settings.
+
+# Test Strategy:
+Create unit tests for configuration loading and validation. Test with valid and invalid configurations. Test default values. Verify sensitive values are not logged.

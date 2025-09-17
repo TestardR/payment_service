@@ -1,0 +1,25 @@
+# Task ID: 18
+# Title: Design and Implement SQLite Database Schema
+# Status: pending
+# Dependencies: 16
+# Priority: high
+# Description: Create the SQLite database schema for payment records with proper indexes and constraints.
+# Details:
+1. Create SQLite database schema with the following tables:
+   - payments: id (primary key), debtor_iban, debtor_name, creditor_iban, creditor_name, amount, currency, idempotency_key (unique), status, created_at, updated_at
+2. Add appropriate indexes:
+   - Unique index on idempotency_key
+   - Index on status for efficient filtering
+   - Index on created_at for chronological queries
+3. Implement database migration using a lightweight migration tool like golang-migrate
+4. Create SQL scripts for:
+   - Schema creation
+   - Indexes
+   - Test data population
+5. Implement connection pooling with proper configuration
+6. Add database health check query
+
+Use parameterized queries throughout to prevent SQL injection. Configure appropriate connection pool settings with timeouts.
+
+# Test Strategy:
+Create integration tests that verify schema creation, constraint enforcement, and index usage. Test unique constraint on idempotency_key. Verify connection pooling works correctly under load. Test migration scripts for both up and down migrations.

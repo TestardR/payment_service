@@ -1,0 +1,21 @@
+# Task ID: 35
+# Title: Implement Application Assembly and Dependency Injection
+# Status: pending
+# Dependencies: 19, 20, 21, 22, 25, 29, 30
+# Priority: high
+# Description: Create application assembly with proper dependency injection.
+# Details:
+1. Implement application assembly in cmd/server/main.go:
+   - Create all components with proper dependencies
+   - Wire up layers (domain, application, infrastructure)
+   - Configure HTTP server and routes
+   - Start background workers
+   - Initialize database connection
+2. Use constructor injection for dependencies
+3. Implement clean separation of concerns
+4. Add proper error handling for initialization failures
+
+Use manual dependency injection without external frameworks. Implement proper resource initialization order.
+
+# Test Strategy:
+Create integration tests for application assembly. Verify all components are properly initialized. Test initialization failures. Verify proper dependency injection.

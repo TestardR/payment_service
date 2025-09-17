@@ -1,0 +1,21 @@
+# Task ID: 27
+# Title: Implement Metrics Endpoint
+# Status: pending
+# Dependencies: 25
+# Priority: low
+# Description: Create a metrics endpoint for exposing application metrics.
+# Details:
+1. Implement MetricsHandler in infrastructure/http/handler/metrics_handler.go:
+   - Implement GET /metrics endpoint
+   - Expose request count, response times, error rates
+   - Expose business metrics (payment creation rate, success/failure ratios)
+   - Format metrics in Prometheus-compatible format
+2. Implement metrics collection throughout the application
+3. Use a lightweight metrics library like github.com/prometheus/client_golang (v1.16.0)
+4. Add labels for detailed metrics analysis
+5. Implement histogram for response time distribution
+
+Use middleware to collect request metrics. Implement business metrics in application services.
+
+# Test Strategy:
+Create unit tests for metrics collection logic. Verify metrics are properly incremented. Test metric labels. Verify Prometheus-compatible format.

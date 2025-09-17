@@ -1,0 +1,20 @@
+# Task ID: 33
+# Title: Implement Idempotency Key Validation
+# Status: pending
+# Dependencies: 20, 25
+# Priority: high
+# Description: Implement idempotency key validation to prevent duplicate payments.
+# Details:
+1. Enhance PaymentRepository with FindByIdempotencyKey method
+2. Implement idempotency check in CreatePaymentCommand handler:
+   - Check if payment with same idempotency key exists
+   - Return existing payment ID if found
+   - Proceed with creation if not found
+3. Add proper error handling for duplicate keys
+4. Implement database index on idempotency_key column
+5. Add metrics for duplicate requests
+
+Use database unique constraint as the ultimate guarantee against duplicates. Implement proper error handling for constraint violations.
+
+# Test Strategy:
+Create integration tests for idempotency logic. Test duplicate requests with same idempotency key. Verify same response is returned for duplicate requests. Test concurrent requests with same idempotency key.

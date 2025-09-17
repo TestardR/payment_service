@@ -1,0 +1,24 @@
+# Task ID: 23
+# Title: Implement JSON Schema Validation
+# Status: pending
+# Dependencies: 16
+# Priority: medium
+# Description: Create JSON schema validation for payment request validation.
+# Details:
+1. Define JSON schema for payment request in infrastructure/http/schema/payment_schema.json:
+   - debtor_iban (string, IBAN format)
+   - debtor_name (string, 3-30 chars)
+   - creditor_iban (string, IBAN format)
+   - creditor_name (string, 3-30 chars)
+   - amount (number)
+   - idempotency_unique_key (string, 10 chars)
+2. Implement validator in infrastructure/http/validator/payment_validator.go
+3. Use a lightweight JSON schema validation library like github.com/xeipuuv/gojsonschema (v1.2.0)
+4. Implement custom validation for IBAN format
+5. Add detailed error messages for validation failures
+6. Implement validation middleware for HTTP handlers
+
+Return detailed validation errors with field names and reasons. Implement custom validators for domain-specific rules.
+
+# Test Strategy:
+Create table-driven tests for validation logic. Test valid and invalid requests. Test edge cases like boundary values. Verify error messages are clear and helpful. Test custom validators for IBAN format.

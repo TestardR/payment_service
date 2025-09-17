@@ -1,0 +1,21 @@
+# Task ID: 22
+# Title: Implement Dual Persistence Transaction Manager
+# Status: pending
+# Dependencies: 20, 21
+# Priority: high
+# Description: Create a transaction manager that ensures atomic operations across both SQLite and XML persistence.
+# Details:
+1. Implement TransactionManager in infrastructure/persistence/transaction_manager.go:
+   - Define interface for transactional operations
+   - Implement method to execute operations in transaction
+   - Ensure rollback on failure for both SQLite and XML
+   - Implement compensation logic for XML file deletion on rollback
+2. Integrate with SQLite transaction mechanism
+3. Implement file system rollback mechanism
+4. Add proper error handling and logging
+5. Implement retry mechanism for transient failures
+
+Use a two-phase approach: prepare both operations, then commit both. On failure, roll back both operations. Use proper error handling and logging for rollback operations.
+
+# Test Strategy:
+Create integration tests that verify atomic operations across both persistence mechanisms. Test rollback scenarios. Test partial failures. Verify no orphaned records between SQLite and XML. Test retry mechanism for transient failures.

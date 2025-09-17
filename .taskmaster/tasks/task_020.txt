@@ -1,0 +1,23 @@
+# Task ID: 20
+# Title: Implement SQLite Repository
+# Status: pending
+# Dependencies: 17, 18
+# Priority: high
+# Description: Create the SQLite repository implementation for the payment domain repository interface.
+# Details:
+1. Implement PaymentRepository in infrastructure/persistence/sqlite/payment_repository.go:
+   - Implement Create method with proper transaction handling
+   - Implement FindByID method
+   - Implement FindByIdempotencyKey method
+   - Implement UpdateStatus method
+   - Implement transaction management with context support
+2. Use database/sql package with proper connection pooling
+3. Implement parameterized queries for all database operations
+4. Add proper error handling and mapping to domain errors
+5. Implement timeout handling using context
+6. Add metrics for query execution time
+
+Use prepared statements for better performance. Implement proper resource cleanup with defer statements. Use context for cancellation and timeouts.
+
+# Test Strategy:
+Create integration tests that verify repository operations against a real SQLite database. Test transaction rollback on error. Test concurrent operations. Verify proper error mapping. Test timeout handling with context cancellation.
