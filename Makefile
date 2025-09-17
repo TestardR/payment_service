@@ -47,10 +47,16 @@ deps:
 	go mod download
 	go mod tidy
 
+# Generate mocks
+generate-mocks:
+	@echo "Generating mocks..."
+	go generate ./...
+
 # Install development tools
 install-tools:
 	@echo "Installing development tools..."
 	go get -u golang.org/x/tools/cmd/goimports
+	go install go.uber.org/mock/mockgen@latest
 
 # All-in-one development setup
 dev-setup: install-tools deps
@@ -69,8 +75,9 @@ help:
 	@echo "  vet          - Run go vet"
 	@echo "  lint         - Run linting tools"
 	@echo "  deps         - Download and tidy dependencies"
+	@echo "  generate-mocks- Generate mocks using gomock"
 	@echo "  install-tools- Install development tools"
 	@echo "  dev-setup    - Setup development environment"
 	@echo "  help         - Show this help"
 
-.PHONY: build build-linux clean test test-coverage run fmt vet lint deps install-tools dev-setup help
+.PHONY: build build-linux clean test test-coverage run fmt vet lint deps generate-mocks install-tools dev-setup help

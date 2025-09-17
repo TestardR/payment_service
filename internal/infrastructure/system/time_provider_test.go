@@ -8,6 +8,7 @@ import (
 )
 
 func TestNewTimeProvider(t *testing.T) {
+	t.Parallel()
 	provider := NewTimeProvider()
 
 	// Test that it returns a value type (not pointer)
@@ -17,6 +18,7 @@ func TestNewTimeProvider(t *testing.T) {
 }
 
 func TestTimeProvider_Now(t *testing.T) {
+	t.Parallel()
 	provider := NewTimeProvider()
 
 	before := time.Now()
@@ -29,6 +31,7 @@ func TestTimeProvider_Now(t *testing.T) {
 }
 
 func TestTimeProvider_Now_ReturnsCurrentTime(t *testing.T) {
+	t.Parallel()
 	provider := NewTimeProvider()
 
 	// Call Now() multiple times and verify they're different (or very close)
