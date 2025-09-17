@@ -91,11 +91,11 @@ func (p *Payment) CreatedAt() time.Time                  { return p.createdAt }
 func (p *Payment) UpdatedAt() time.Time                  { return p.updatedAt }
 
 func validatePaymentData(debtorName, creditorName string, amount shared.Amount) error {
-	if len(debtorName) < 3 || len(debtorName) > 30 {
+	if len(debtorName) < 3 {
 		return shared.ErrInvalidAmount
 	}
-
-	if len(creditorName) < 3 || len(creditorName) > 30 {
+	
+	if len(creditorName) < 3 {
 		return shared.ErrInvalidAmount
 	}
 
