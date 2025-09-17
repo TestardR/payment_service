@@ -5,9 +5,12 @@ import (
 	"time"
 
 	"paymentprocessor/internal/domain/shared"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPayment(t *testing.T) {
+	t.Parallel()
 	// Setup valid test data
 	debtorIBAN, _ := shared.NewIBAN("GB82WEST12345698765432")
 	creditorIBAN, _ := shared.NewIBAN("FR1420041010050500013M02606")
@@ -84,6 +87,7 @@ func TestNewPayment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			payment, err := NewPayment(
 				tt.id,
 				tt.debtorIBAN,
@@ -97,105 +101,67 @@ func TestNewPayment(t *testing.T) {
 			)
 
 			if tt.expectError {
-				if err == nil {
-					t.Error("expected error but got none")
-				}
+				assert.Error(t, err, "expected error but got none")
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				// Payment is now a value type, so we don't need to check for nil
+				assert.NoError(t, err, "unexpected error")
 
 				// Verify payment properties
-				if payment.ID() != tt.id {
-					t.Errorf("expected ID %q, got %q", tt.id, payment.ID())
-				}
-				if !payment.DebtorIBAN().Equals(tt.debtorIBAN) {
-					t.Errorf("expected debtor IBAN %q, got %q", tt.debtorIBAN.String(), payment.DebtorIBAN().String())
-				}
-				if payment.DebtorName() != tt.debtorName {
-					t.Errorf("expected debtor name %q, got %q", tt.debtorName, payment.DebtorName())
-				}
-				if !payment.CreditorIBAN().Equals(tt.creditorIBAN) {
-					t.Errorf("expected creditor IBAN %q, got %q", tt.creditorIBAN.String(), payment.CreditorIBAN().String())
-				}
-				if payment.CreditorName() != tt.creditorName {
-					t.Errorf("expected creditor name %q, got %q", tt.creditorName, payment.CreditorName())
-				}
-				if !payment.Amount().Equals(tt.amount) {
-					t.Errorf("expected amount %f, got %f", tt.amount.Value(), payment.Amount().Value())
-				}
-				if !payment.IdempotencyKey().Equals(tt.idempotencyKey) {
-					t.Errorf("expected idempotency key %q, got %q", tt.idempotencyKey.String(), payment.IdempotencyKey().String())
-				}
-				if payment.Status() != StatusPending {
-					t.Errorf("expected status %q, got %q", StatusPending, payment.Status())
-				}
-				if !payment.CreatedAt().Equal(tt.createdAt) {
-					t.Errorf("expected createdAt %v, got %v", tt.createdAt, payment.CreatedAt())
-				}
-				if !payment.UpdatedAt().Equal(tt.updatedAt) {
-					t.Errorf("expected updatedAt %v, got %v", tt.updatedAt, payment.UpdatedAt())
-				}
+				assert.Equal(t, tt.id, payment.ID(), "payment ID should match")
+				assert.True(t, payment.DebtorIBAN().Equals(tt.debtorIBAN), "debtor IBAN should match")
+				assert.Equal(t, tt.debtorName, payment.DebtorName(), "debtor name should match")
+				assert.True(t, payment.CreditorIBAN().Equals(tt.creditorIBAN), "creditor IBAN should match")
+				assert.Equal(t, tt.creditorName, payment.CreditorName(), "creditor name should match")
+				assert.True(t, payment.Amount().Equals(tt.amount), "amount should match")
+				assert.True(t, payment.IdempotencyKey().Equals(tt.idempotencyKey), "idempotency key should match")
+				assert.Equal(t, StatusPending, payment.Status(), "status should be pending")
+				assert.True(t, payment.CreatedAt().Equal(tt.createdAt), "createdAt should match")
+				assert.True(t, payment.UpdatedAt().Equal(tt.updatedAt), "updatedAt should match")
 			}
 		})
 	}
 }
 
 func TestPayment_MarkAsProcessed(t *testing.T) {
+	t.Parallel()
 	// Create a valid payment
 	payment := createValidPayment(t)
 	updatedAt := time.Now().Add(time.Hour)
 
 	// Test successful transition
 	updatedPayment, err := payment.MarkAsProcessed(updatedAt)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if updatedPayment.Status() != StatusProcessed {
-		t.Errorf("expected status %q, got %q", StatusProcessed, updatedPayment.Status())
-	}
-	if !updatedPayment.UpdatedAt().Equal(updatedAt) {
-		t.Errorf("expected updatedAt %v, got %v", updatedAt, updatedPayment.UpdatedAt())
-	}
+	assert.NoError(t, err, "should successfully mark payment as processed")
+	assert.Equal(t, StatusProcessed, updatedPayment.Status(), "status should be processed")
+	assert.True(t, updatedPayment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
 
 	// Test invalid transition from processed state
 	_, err = updatedPayment.MarkAsProcessed(updatedAt)
-	if err != shared.ErrInvalidStatusTransition {
-		t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
-	}
+	assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 }
 
 func TestPayment_MarkAsFailed(t *testing.T) {
+	t.Parallel()
 	// Create a valid payment
 	payment := createValidPayment(t)
 	updatedAt := time.Now().Add(time.Hour)
 
 	// Test successful transition
 	updatedPayment, err := payment.MarkAsFailed(updatedAt)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if updatedPayment.Status() != StatusFailed {
-		t.Errorf("expected status %q, got %q", StatusFailed, updatedPayment.Status())
-	}
-	if !updatedPayment.UpdatedAt().Equal(updatedAt) {
-		t.Errorf("expected updatedAt %v, got %v", updatedAt, updatedPayment.UpdatedAt())
-	}
+	assert.NoError(t, err, "should successfully mark payment as failed")
+	assert.Equal(t, StatusFailed, updatedPayment.Status(), "status should be failed")
+	assert.True(t, updatedPayment.UpdatedAt().Equal(updatedAt), "updatedAt should match")
 
 	// Test invalid transition from failed state
 	_, err = updatedPayment.MarkAsFailed(updatedAt)
-	if err != shared.ErrInvalidStatusTransition {
-		t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
-	}
+	assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 }
 
 func TestPayment_StatusTransitions(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name           string
-		initialStatus  PaymentStatus
-		targetStatus   PaymentStatus
-		expectError    bool
+		name          string
+		initialStatus PaymentStatus
+		targetStatus  PaymentStatus
+		expectError   bool
 	}{
 		{
 			name:          "pending to processed",
@@ -225,6 +191,7 @@ func TestPayment_StatusTransitions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			payment := createValidPayment(t)
 			updatedAt := time.Now().Add(time.Hour)
 
@@ -245,16 +212,10 @@ func TestPayment_StatusTransitions(t *testing.T) {
 			}
 
 			if tt.expectError {
-				if err != shared.ErrInvalidStatusTransition {
-					t.Errorf("expected ErrInvalidStatusTransition, got %v", err)
-				}
+				assert.Equal(t, shared.ErrInvalidStatusTransition, err, "should return invalid status transition error")
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				}
-				if updatedPayment.Status() != tt.targetStatus {
-					t.Errorf("expected status %q, got %q", tt.targetStatus, updatedPayment.Status())
-				}
+				assert.NoError(t, err, "should successfully transition status")
+				assert.Equal(t, tt.targetStatus, updatedPayment.Status(), "status should match target status")
 			}
 		})
 	}
