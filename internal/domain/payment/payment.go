@@ -79,16 +79,16 @@ func (p Payment) canTransitionTo(newStatus PaymentStatus) bool {
 	}
 }
 
-func (p *Payment) ID() string                            { return p.id }
-func (p *Payment) DebtorIBAN() shared.IBAN               { return p.debtorIBAN }
-func (p *Payment) DebtorName() string                    { return p.debtorName }
-func (p *Payment) CreditorIBAN() shared.IBAN             { return p.creditorIBAN }
-func (p *Payment) CreditorName() string                  { return p.creditorName }
-func (p *Payment) Amount() shared.Amount                 { return p.amount }
-func (p *Payment) IdempotencyKey() shared.IdempotencyKey { return p.idempotencyKey }
-func (p *Payment) Status() PaymentStatus                 { return p.status }
-func (p *Payment) CreatedAt() time.Time                  { return p.createdAt }
-func (p *Payment) UpdatedAt() time.Time                  { return p.updatedAt }
+func (p Payment) ID() string                            { return p.id }
+func (p Payment) DebtorIBAN() shared.IBAN               { return p.debtorIBAN }
+func (p Payment) DebtorName() string                    { return p.debtorName }
+func (p Payment) CreditorIBAN() shared.IBAN             { return p.creditorIBAN }
+func (p Payment) CreditorName() string                  { return p.creditorName }
+func (p Payment) Amount() shared.Amount                 { return p.amount }
+func (p Payment) IdempotencyKey() shared.IdempotencyKey { return p.idempotencyKey }
+func (p Payment) Status() PaymentStatus                 { return p.status }
+func (p Payment) CreatedAt() time.Time                  { return p.createdAt }
+func (p Payment) UpdatedAt() time.Time                  { return p.updatedAt }
 
 func validatePaymentData(debtorName, creditorName string, amount shared.Amount) error {
 	if len(debtorName) < 3 {
