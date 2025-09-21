@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"paymentprocessor/internal/domain/payment"
-	"paymentprocessor/internal/domain/shared"
-	"paymentprocessor/internal/mocks"
-
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	"paymentprocessor/internal/application/service/mocks"
+	"paymentprocessor/internal/domain/payment"
+	"paymentprocessor/internal/domain/shared"
 )
 
 func TestPaymentService_EnsureIdempotency(t *testing.T) {

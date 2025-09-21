@@ -11,9 +11,10 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	payment "paymentprocessor/internal/domain/payment"
 	shared "paymentprocessor/internal/domain/shared"
-	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
 )
