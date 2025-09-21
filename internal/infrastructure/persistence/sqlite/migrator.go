@@ -80,6 +80,7 @@ func (m Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) {
 	for _, applied := range appliedMigrations {
 		if migration, exists := migrationMap[applied.Version]; exists {
 			migration.AppliedAt = applied.AppliedAt
+			migrationMap[applied.Version] = migration
 		}
 	}
 
