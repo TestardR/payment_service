@@ -276,5 +276,5 @@ func createTestDatabase(t *testing.T) *Database {
 	db, err := NewDatabase(config)
 	require.NoError(t, err)
 
-	return db
+	return &db
 }

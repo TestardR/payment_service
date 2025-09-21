@@ -16,60 +16,47 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-// Migration represents a database migration
 type Migration struct {
-	Version     int
-	Name        string
-	SQL         string
-	AppliedAt   *time.Time
-	Checksum    string
+	Version   int
+	SQL       string
+	AppliedAt *time.Time
 }
 
-// Migrator handles database migrations
 type Migrator struct {
 	db *sql.DB
 }
 
-// NewMigrator creates a new migrator instance
-func NewMigrator(db *sql.DB) *Migrator {
-	return &Migrator{db: db}
+func NewMigrator(db *sql.DB) Migrator {
+	return Migrator{db: db}
 }
 
-// Migrate runs all pending migrations
 func (m *Migrator) Migrate(ctx context.Context) error {
-	// Create migrations table if it doesn't exist
 	if err := m.createMigrationsTable(ctx); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
-	// Get available migrations
 	availableMigrations, err := m.getAvailableMigrations()
 	if err != nil {
 		return fmt.Errorf("failed to get available migrations: %w", err)
 	}
 
-	// Get applied migrations
 	appliedMigrations, err := m.getAppliedMigrations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get applied migrations: %w", err)
 	}
 
-	// Find pending migrations
 	pendingMigrations := m.findPendingMigrations(availableMigrations, appliedMigrations)
 
-	// Apply pending migrations
 	for _, migration := range pendingMigrations {
 		if err := m.applyMigration(ctx, migration); err != nil {
-			return fmt.Errorf("failed to apply migration %s: %w", migration.Name, err)
+			return fmt.Errorf("failed to apply migration %d: %w", migration.Version, err)
 		}
 	}
 
 	return nil
 }
 
-// GetMigrationStatus returns the status of all migrations
 func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) {
-	// Ensure migrations table exists
 	if err := m.createMigrationsTable(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create migrations table: %w", err)
 	}
@@ -84,23 +71,18 @@ func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) 
 		return nil, fmt.Errorf("failed to get applied migrations: %w", err)
 	}
 
-	// Merge available and applied migrations
 	migrationMap := make(map[int]*Migration)
 	
-	// Add available migrations
 	for _, migration := range availableMigrations {
 		migrationMap[migration.Version] = &migration
 	}
 	
-	// Update with applied status
 	for _, applied := range appliedMigrations {
 		if migration, exists := migrationMap[applied.Version]; exists {
 			migration.AppliedAt = applied.AppliedAt
-			migration.Checksum = applied.Checksum
 		}
 	}
 
-	// Convert map to slice and sort
 	var result []Migration
 	for _, migration := range migrationMap {
 		result = append(result, *migration)
@@ -118,8 +100,6 @@ func (m *Migrator) createMigrationsTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version INTEGER PRIMARY KEY,
-			name TEXT NOT NULL,
-			checksum TEXT NOT NULL,
 			applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		);
 		
@@ -178,9 +158,6 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 		return Migration{}, fmt.Errorf("failed to parse version from filename %s: %w", filename, err)
 	}
 
-	// Extract name (remove version prefix and .sql suffix)
-	name := strings.TrimSuffix(parts[1], ".sql")
-
 	// Read SQL content
 	sqlBytes, err := migrationFiles.ReadFile(filepath.Join("migrations", filename))
 	if err != nil {
@@ -189,7 +166,6 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 
 	return Migration{
 		Version: version,
-		Name:    name,
 		SQL:     string(sqlBytes),
 	}, nil
 }
@@ -197,7 +173,7 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 // getAppliedMigrations retrieves all applied migrations from the database
 func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error) {
 	query := `
-		SELECT version, name, checksum, applied_at 
+		SELECT version, applied_at 
 		FROM schema_migrations 
 		ORDER BY version
 	`
@@ -213,7 +189,7 @@ func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error
 		var migration Migration
 		var appliedAt time.Time
 		
-		err := rows.Scan(&migration.Version, &migration.Name, &migration.Checksum, &appliedAt)
+		err := rows.Scan(&migration.Version, &appliedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan migration row: %w", err)
 		}
@@ -255,26 +231,11 @@ func (m *Migrator) applyMigration(ctx context.Context, migration Migration) erro
 		return fmt.Errorf("failed to execute migration SQL: %w", err)
 	}
 
-	// Record migration as applied
-	checksum := m.calculateChecksum(migration.SQL)
-	insertQuery := `
-		INSERT INTO schema_migrations (version, name, checksum) 
-		VALUES (?, ?, ?)
-	`
-	
-	if _, err := tx.ExecContext(ctx, insertQuery, migration.Version, migration.Name, checksum); err != nil {
+	insertQuery := `INSERT INTO schema_migrations (version) VALUES (?)`
+	if _, err := tx.ExecContext(ctx, insertQuery, migration.Version); err != nil {
 		return fmt.Errorf("failed to record migration: %w", err)
 	}
 
 	return tx.Commit()
 }
 
-// calculateChecksum calculates a simple checksum for migration content
-func (m *Migrator) calculateChecksum(content string) string {
-	// Simple checksum - in production, consider using a proper hash function
-	var sum int64
-	for _, char := range content {
-		sum += int64(char)
-	}
-	return fmt.Sprintf("%x", sum)
-}

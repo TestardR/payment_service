@@ -79,7 +79,7 @@ func TestMigrator_GetMigrationStatus(t *testing.T) {
 
 		// Check that no migrations are applied initially
 		for _, migration := range statusBefore {
-			assert.Nil(t, migration.AppliedAt, "Migration %s should not be applied initially", migration.Name)
+			assert.Nil(t, migration.AppliedAt, "Migration %d should not be applied initially", migration.Version)
 		}
 
 		// Run migrations
@@ -96,7 +96,6 @@ func TestMigrator_GetMigrationStatus(t *testing.T) {
 		for _, migration := range statusAfter {
 			if migration.AppliedAt != nil {
 				appliedCount++
-				assert.NotEmpty(t, migration.Checksum, "Applied migration should have checksum")
 			}
 		}
 		assert.GreaterOrEqual(t, appliedCount, 1, "At least one migration should be applied")
@@ -119,7 +118,6 @@ func TestMigrator_GetMigrationStatus(t *testing.T) {
 		// All migrations should be unapplied
 		for _, migration := range status {
 			assert.Nil(t, migration.AppliedAt)
-			assert.Empty(t, migration.Checksum)
 		}
 	})
 }
@@ -148,7 +146,6 @@ func TestMigrator_getAvailableMigrations(t *testing.T) {
 		// Check that each migration has required fields
 		for _, migration := range migrations {
 			assert.Greater(t, migration.Version, 0, "Migration version should be positive")
-			assert.NotEmpty(t, migration.Name, "Migration name should not be empty")
 			assert.NotEmpty(t, migration.SQL, "Migration SQL should not be empty")
 			assert.Nil(t, migration.AppliedAt, "Available migration should not have AppliedAt set")
 		}
@@ -170,7 +167,6 @@ func TestMigrator_parseMigrationFile(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 1, migration.Version)
-		assert.Equal(t, "create_payments_table", migration.Name)
 		assert.NotEmpty(t, migration.SQL)
 		assert.Contains(t, migration.SQL, "CREATE TABLE")
 		assert.Contains(t, migration.SQL, "payments")
@@ -190,40 +186,3 @@ func TestMigrator_parseMigrationFile(t *testing.T) {
 	})
 }
 
-func TestMigrator_calculateChecksum(t *testing.T) {
-	t.Parallel()
-
-	t.Run("generates consistent checksums", func(t *testing.T) {
-		t.Parallel()
-
-		db := createTestDatabase(t)
-		defer db.Close()
-
-		migrator := NewMigrator(db.DB())
-
-		content := "CREATE TABLE test (id INTEGER PRIMARY KEY);"
-		
-		checksum1 := migrator.calculateChecksum(content)
-		checksum2 := migrator.calculateChecksum(content)
-		
-		assert.Equal(t, checksum1, checksum2, "Checksums should be consistent")
-		assert.NotEmpty(t, checksum1, "Checksum should not be empty")
-	})
-
-	t.Run("generates different checksums for different content", func(t *testing.T) {
-		t.Parallel()
-
-		db := createTestDatabase(t)
-		defer db.Close()
-
-		migrator := NewMigrator(db.DB())
-
-		content1 := "CREATE TABLE test1 (id INTEGER PRIMARY KEY);"
-		content2 := "CREATE TABLE test2 (id INTEGER PRIMARY KEY);"
-		
-		checksum1 := migrator.calculateChecksum(content1)
-		checksum2 := migrator.calculateChecksum(content2)
-		
-		assert.NotEqual(t, checksum1, checksum2, "Different content should have different checksums")
-	})
-}

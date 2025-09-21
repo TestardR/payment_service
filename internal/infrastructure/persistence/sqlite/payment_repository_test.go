@@ -289,7 +289,7 @@ func TestPaymentRepository_ConcurrentOperations(t *testing.T) {
 }
 
 // createTestRepository creates a test repository with an initialized database
-func createTestRepository(t *testing.T) (*PaymentRepository, *Database) {
+func createTestRepository(t *testing.T) (PaymentRepository, *Database) {
 	tempDir := t.TempDir()
 	dbPath := filepath.Join(tempDir, "test_repo.db")
 
@@ -303,8 +303,8 @@ func createTestRepository(t *testing.T) (*PaymentRepository, *Database) {
 	err = db.Initialize(ctx)
 	require.NoError(t, err)
 
-	repo := NewPaymentRepository(db)
-	return repo, db
+	repo := NewPaymentRepository(&db)
+	return repo, &db
 }
 
 // createTestPayment creates a test payment with valid data

@@ -11,14 +11,12 @@ import (
 	"paymentprocessor/internal/domain/shared"
 )
 
-// PaymentRepository implements the payment.Repository interface using SQLite
 type PaymentRepository struct {
 	db *Database
 }
 
-// NewPaymentRepository creates a new SQLite payment repository
-func NewPaymentRepository(db *Database) *PaymentRepository {
-	return &PaymentRepository{db: db}
+func NewPaymentRepository(db *Database) PaymentRepository {
+	return PaymentRepository{db: db}
 }
 
 // Save persists a payment to the database
