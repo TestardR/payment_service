@@ -55,17 +55,6 @@ func TestPaymentRepository_Save(t *testing.T) {
 		assert.ErrorIs(t, err, shared.ErrDuplicateIdempotencyKey)
 	})
 
-	t.Run("returns error for nil payment", func(t *testing.T) {
-		t.Parallel()
-
-		repo, db := createTestRepository(t)
-		defer db.Close()
-
-		ctx := context.Background()
-		err := repo.Save(ctx, nil)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "payment cannot be nil")
-	})
 }
 
 func TestPaymentRepository_FindByID(t *testing.T) {
@@ -108,8 +97,8 @@ func TestPaymentRepository_FindByID(t *testing.T) {
 
 		ctx := context.Background()
 		foundPayment, err := repo.FindByID(ctx, "non-existent-id")
-		require.NoError(t, err)
-		assert.Nil(t, foundPayment)
+		assert.ErrorIs(t, err, shared.ErrPaymentNotFound)
+		assert.Equal(t, payment.Payment{}, foundPayment)
 	})
 
 	t.Run("finds payment with different statuses", func(t *testing.T) {
@@ -172,8 +161,8 @@ func TestPaymentRepository_FindByIdempotencyKey(t *testing.T) {
 		require.NoError(t, err)
 
 		foundPayment, err := repo.FindByIdempotencyKey(ctx, nonExistentKey)
-		require.NoError(t, err)
-		assert.Nil(t, foundPayment)
+		assert.ErrorIs(t, err, shared.ErrPaymentNotFound)
+		assert.Equal(t, payment.Payment{}, foundPayment)
 	})
 }
 
@@ -261,7 +250,7 @@ func TestPaymentRepository_ConcurrentOperations(t *testing.T) {
 		ctx := context.Background()
 		
 		// Create multiple payments with different idempotency keys
-		payments := make([]*payment.Payment, 5)
+		payments := make([]payment.Payment, 5)
 		for i := 0; i < 5; i++ {
 			payments[i] = createTestPaymentWithID(t, fmt.Sprintf("payment_%d", i))
 		}
@@ -269,7 +258,7 @@ func TestPaymentRepository_ConcurrentOperations(t *testing.T) {
 		// Save payments concurrently
 		errCh := make(chan error, 5)
 		for _, p := range payments {
-			go func(payment *payment.Payment) {
+			go func(payment payment.Payment) {
 				errCh <- repo.Save(ctx, payment)
 			}(p)
 		}
@@ -303,17 +292,17 @@ func createTestRepository(t *testing.T) (PaymentRepository, *Database) {
 	err = db.Initialize(ctx)
 	require.NoError(t, err)
 
-	repo := NewPaymentRepository(&db)
+	repo := NewPaymentRepository(db)
 	return repo, &db
 }
 
 // createTestPayment creates a test payment with valid data
-func createTestPayment(t *testing.T) *payment.Payment {
+func createTestPayment(t *testing.T) payment.Payment {
 	return createTestPaymentWithID(t, "test_payment_001")
 }
 
 // createTestPaymentWithID creates a test payment with a specific ID
-func createTestPaymentWithID(t *testing.T, id string) *payment.Payment {
+func createTestPaymentWithID(t *testing.T, id string) payment.Payment {
 	debtorIBAN, err := shared.NewIBAN("DE89370400440532013000")
 	require.NoError(t, err)
 
@@ -351,7 +340,7 @@ func createTestPaymentWithID(t *testing.T, id string) *payment.Payment {
 }
 
 // createTestPaymentWithIdempotencyKey creates a test payment with a specific idempotency key
-func createTestPaymentWithIdempotencyKey(t *testing.T, key shared.IdempotencyKey) *payment.Payment {
+func createTestPaymentWithIdempotencyKey(t *testing.T, key shared.IdempotencyKey) payment.Payment {
 	debtorIBAN, err := shared.NewIBAN("DE89370400440532013000")
 	require.NoError(t, err)
 

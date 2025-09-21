@@ -102,7 +102,6 @@ func TestDatabase_Initialize(t *testing.T) {
 	})
 }
 
-
 func TestDatabase_GetMigrationStatus(t *testing.T) {
 	t.Parallel()
 

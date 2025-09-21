@@ -53,5 +53,5 @@ func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID strin
 		return shared.ErrInvalidPaymentStatus
 	}
 
-	return s.repository.Save(ctx, existingPayment)
+	return s.repository.Save(ctx, *existingPayment)
 }

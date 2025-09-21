@@ -30,7 +30,7 @@ func NewMigrator(db *sql.DB) Migrator {
 	return Migrator{db: db}
 }
 
-func (m *Migrator) Migrate(ctx context.Context) error {
+func (m Migrator) Migrate(ctx context.Context) error {
 	if err := m.createMigrationsTable(ctx); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
@@ -56,7 +56,7 @@ func (m *Migrator) Migrate(ctx context.Context) error {
 	return nil
 }
 
-func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) {
+func (m Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) {
 	if err := m.createMigrationsTable(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create migrations table: %w", err)
 	}
@@ -95,7 +95,7 @@ func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) 
 	return result, nil
 }
 
-func (m *Migrator) createMigrationsTable(ctx context.Context) error {
+func (m Migrator) createMigrationsTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version INTEGER PRIMARY KEY,
@@ -110,7 +110,7 @@ func (m *Migrator) createMigrationsTable(ctx context.Context) error {
 	return err
 }
 
-func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
+func (m Migrator) getAvailableMigrations() ([]Migration, error) {
 	entries, err := migrationFiles.ReadDir("migrations")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read migrations directory: %w", err)
@@ -141,7 +141,7 @@ func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
 	return migrations, nil
 }
 
-func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
+func (m Migrator) parseMigrationFile(filename string) (Migration, error) {
 	parts := strings.SplitN(filename, "_", 2)
 	if len(parts) != 2 {
 		return Migration{}, fmt.Errorf("invalid migration filename format: %s", filename)
@@ -163,7 +163,7 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 	}, nil
 }
 
-func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error) {
+func (m Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error) {
 	query := `
 		SELECT version, applied_at 
 		FROM schema_migrations 
@@ -193,7 +193,7 @@ func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error
 	return migrations, rows.Err()
 }
 
-func (m *Migrator) findPendingMigrations(available, applied []Migration) []Migration {
+func (m Migrator) findPendingMigrations(available, applied []Migration) []Migration {
 	appliedMap := make(map[int]bool)
 	for _, migration := range applied {
 		appliedMap[migration.Version] = true
@@ -209,7 +209,7 @@ func (m *Migrator) findPendingMigrations(available, applied []Migration) []Migra
 	return pending
 }
 
-func (m *Migrator) applyMigration(ctx context.Context, migration Migration) error {
+func (m Migrator) applyMigration(ctx context.Context, migration Migration) error {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
