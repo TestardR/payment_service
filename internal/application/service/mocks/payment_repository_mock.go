@@ -22,6 +22,7 @@ import (
 type MockRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockRepositoryMockRecorder
+	isgomock struct{}
 }
 
 // MockRepositoryMockRecorder is the mock recorder for MockRepository.
@@ -72,17 +73,17 @@ func (mr *MockRepositoryMockRecorder) FindByIdempotencyKey(ctx, key any) *gomock
 }
 
 // Save mocks base method.
-func (m *MockRepository) Save(ctx context.Context, payment payment.Payment) error {
+func (m *MockRepository) Save(ctx context.Context, arg1 payment.Payment) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", ctx, payment)
+	ret := m.ctrl.Call(m, "Save", ctx, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Save indicates an expected call of Save.
-func (mr *MockRepositoryMockRecorder) Save(ctx, payment any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Save(ctx, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockRepository)(nil).Save), ctx, payment)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockRepository)(nil).Save), ctx, arg1)
 }
 
 // UpdateStatus mocks base method.
