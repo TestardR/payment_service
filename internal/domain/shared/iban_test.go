@@ -2,6 +2,8 @@ package shared
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewIBAN(t *testing.T) {
@@ -56,19 +58,11 @@ func TestNewIBAN(t *testing.T) {
 			iban, err := NewIBAN(tt.input)
 
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("expected error for input %q, but got none", tt.input)
-				}
-				if err != ErrInvalidIBAN {
-					t.Errorf("expected ErrInvalidIBAN, got %v", err)
-				}
+				assert.Error(t, err, "expected error for input %q", tt.input)
+				assert.Equal(t, ErrInvalidIBAN, err, "expected ErrInvalidIBAN")
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error for input %q: %v", tt.input, err)
-				}
-				if iban.Value() != tt.expected {
-					t.Errorf("expected %q, got %q", tt.expected, iban.Value())
-				}
+				assert.NoError(t, err, "unexpected error for input %q", tt.input)
+				assert.Equal(t, tt.expected, iban.Value(), "expected %q, got %q", tt.expected, iban.Value())
 			}
 		})
 	}
@@ -78,9 +72,7 @@ func TestIBAN_String(t *testing.T) {
 	iban, _ := NewIBAN("GB82WEST12345698765432")
 	expected := "GB82WEST12345698765432"
 
-	if iban.String() != expected {
-		t.Errorf("expected %q, got %q", expected, iban.String())
-	}
+	assert.Equal(t, expected, iban.String(), "expected %q, got %q", expected, iban.String())
 }
 
 func TestIBAN_Equals(t *testing.T) {
@@ -88,11 +80,6 @@ func TestIBAN_Equals(t *testing.T) {
 	iban2, _ := NewIBAN("gb82 west 1234 5698 7654 32")
 	iban3, _ := NewIBAN("FR1420041010050500013M02606")
 
-	if !iban1.Equals(iban2) {
-		t.Error("expected IBANs to be equal (normalized)")
-	}
-
-	if iban1.Equals(iban3) {
-		t.Error("expected IBANs to be different")
-	}
+	assert.True(t, iban1.Equals(iban2), "expected IBANs to be equal (normalized)")
+	assert.False(t, iban1.Equals(iban3), "expected IBANs to be different")
 }
