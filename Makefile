@@ -18,7 +18,7 @@ clean:
 
 # Run tests
 test:
-	go test -v ./...
+	go test -race -parallel 6 -count=1 -v -cover -coverprofile=unit_coverage.out ./...
 
 # Run tests with coverage
 test-coverage:
