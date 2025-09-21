@@ -2,6 +2,8 @@ package shared
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewAmount(t *testing.T) {
@@ -52,19 +54,11 @@ func TestNewAmount(t *testing.T) {
 			amount, err := NewAmount(tt.input)
 
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("expected error for input %f, but got none", tt.input)
-				}
-				if err != ErrInvalidAmount {
-					t.Errorf("expected ErrInvalidAmount, got %v", err)
-				}
+				assert.Error(t, err, "expected error for input %f", tt.input)
+				assert.Equal(t, ErrInvalidAmount, err, "expected ErrInvalidAmount")
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error for input %f: %v", tt.input, err)
-				}
-				if amount.Value() != tt.expected {
-					t.Errorf("expected %f, got %f", tt.expected, amount.Value())
-				}
+				assert.NoError(t, err, "unexpected error for input %f", tt.input)
+				assert.Equal(t, tt.expected, amount.Value(), "expected %f, got %f", tt.expected, amount.Value())
 			}
 		})
 	}
@@ -74,13 +68,8 @@ func TestAmount_IsZero(t *testing.T) {
 	zeroAmount, _ := NewAmount(0.0)
 	nonZeroAmount, _ := NewAmount(10.50)
 
-	if !zeroAmount.IsZero() {
-		t.Error("expected zero amount to return true for IsZero()")
-	}
-
-	if nonZeroAmount.IsZero() {
-		t.Error("expected non-zero amount to return false for IsZero()")
-	}
+	assert.True(t, zeroAmount.IsZero(), "expected zero amount to return true for IsZero()")
+	assert.False(t, nonZeroAmount.IsZero(), "expected non-zero amount to return false for IsZero()")
 }
 
 func TestAmount_Add(t *testing.T) {
@@ -90,9 +79,7 @@ func TestAmount_Add(t *testing.T) {
 	result := amount1.Add(amount2)
 	expected := 15.75
 
-	if result.Value() != expected {
-		t.Errorf("expected %f, got %f", expected, result.Value())
-	}
+	assert.Equal(t, expected, result.Value(), "expected %f, got %f", expected, result.Value())
 }
 
 func TestAmount_Subtract(t *testing.T) {
@@ -133,16 +120,10 @@ func TestAmount_Subtract(t *testing.T) {
 			result, err := amount1.Subtract(amount2)
 
 			if tt.expectError {
-				if err == nil {
-					t.Errorf("expected error for %f - %f, but got none", tt.amount1, tt.amount2)
-				}
+				assert.Error(t, err, "expected error for %f - %f", tt.amount1, tt.amount2)
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error for %f - %f: %v", tt.amount1, tt.amount2, err)
-				}
-				if result.Value() != tt.expected {
-					t.Errorf("expected %f, got %f", tt.expected, result.Value())
-				}
+				assert.NoError(t, err, "unexpected error for %f - %f", tt.amount1, tt.amount2)
+				assert.Equal(t, tt.expected, result.Value(), "expected %f, got %f", tt.expected, result.Value())
 			}
 		})
 	}
@@ -153,11 +134,6 @@ func TestAmount_Equals(t *testing.T) {
 	amount2, _ := NewAmount(10.50)
 	amount3, _ := NewAmount(15.75)
 
-	if !amount1.Equals(amount2) {
-		t.Error("expected equal amounts to return true for Equals()")
-	}
-
-	if amount1.Equals(amount3) {
-		t.Error("expected different amounts to return false for Equals()")
-	}
+	assert.True(t, amount1.Equals(amount2), "expected equal amounts to return true for Equals()")
+	assert.False(t, amount1.Equals(amount3), "expected different amounts to return false for Equals()")
 }

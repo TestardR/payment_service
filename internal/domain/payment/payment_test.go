@@ -189,7 +189,7 @@ func TestPayment_StatusTransitions(t *testing.T) {
 		},
 	}
 
-		for _, tt := range tests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			payment := createValidPayment(t)
@@ -221,7 +221,7 @@ func TestPayment_StatusTransitions(t *testing.T) {
 }
 
 // Helper function to create a valid payment for testing
-func createValidPayment(t *testing.T) *Payment {
+func createValidPayment(t *testing.T) Payment {
 	debtorIBAN, _ := shared.NewIBAN("GB82WEST12345698765432")
 	creditorIBAN, _ := shared.NewIBAN("FR1420041010050500013M02606")
 	amount, _ := shared.NewAmount(100.50)

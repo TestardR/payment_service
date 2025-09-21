@@ -3,6 +3,7 @@ module paymentprocessor
 go 1.24.4
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 )

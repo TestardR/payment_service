@@ -29,12 +29,12 @@ func NewPayment(
 	idempotencyKey shared.IdempotencyKey,
 	createdAt time.Time,
 	updatedAt time.Time,
-) (*Payment, error) {
+) (Payment, error) {
 	if err := validatePaymentData(debtorName, creditorName, amount); err != nil {
-		return nil, err
+		return Payment{}, err
 	}
 
-	return &Payment{
+	return Payment{
 		id:             id,
 		debtorIBAN:     debtorIBAN,
 		debtorName:     debtorName,
