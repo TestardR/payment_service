@@ -19,7 +19,6 @@ func NewPaymentRepository(db *Database) PaymentRepository {
 	return PaymentRepository{db: db}
 }
 
-// Save persists a payment to the database
 func (r *PaymentRepository) Save(ctx context.Context, p *payment.Payment) error {
 	if p == nil {
 		return fmt.Errorf("payment cannot be nil")
@@ -39,7 +38,7 @@ func (r *PaymentRepository) Save(ctx context.Context, p *payment.Payment) error 
 		p.CreditorIBAN().Value(),
 		p.CreditorName(),
 		p.Amount().Cents(),
-		"EUR", // Default currency
+		"EUR",
 		p.IdempotencyKey().Value(),
 		string(p.Status()),
 		p.CreatedAt(),
@@ -47,7 +46,6 @@ func (r *PaymentRepository) Save(ctx context.Context, p *payment.Payment) error 
 	)
 
 	if err != nil {
-		// Check for unique constraint violation on idempotency key
 		if isUniqueConstraintError(err) {
 			return shared.ErrDuplicateIdempotencyKey
 		}
@@ -57,7 +55,6 @@ func (r *PaymentRepository) Save(ctx context.Context, p *payment.Payment) error 
 	return nil
 }
 
-// FindByID retrieves a payment by its ID
 func (r *PaymentRepository) FindByID(ctx context.Context, id string) (*payment.Payment, error) {
 	query := `
 		SELECT id, debtor_iban, debtor_name, creditor_iban, creditor_name,
@@ -71,7 +68,7 @@ func (r *PaymentRepository) FindByID(ctx context.Context, id string) (*payment.P
 	p, err := r.scanPayment(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Payment not found
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to find payment by ID: %w", err)
 	}
@@ -79,7 +76,6 @@ func (r *PaymentRepository) FindByID(ctx context.Context, id string) (*payment.P
 	return p, nil
 }
 
-// FindByIdempotencyKey retrieves a payment by its idempotency key
 func (r *PaymentRepository) FindByIdempotencyKey(ctx context.Context, key shared.IdempotencyKey) (*payment.Payment, error) {
 	query := `
 		SELECT id, debtor_iban, debtor_name, creditor_iban, creditor_name,
@@ -93,7 +89,7 @@ func (r *PaymentRepository) FindByIdempotencyKey(ctx context.Context, key shared
 	p, err := r.scanPayment(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil // Payment not found
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to find payment by idempotency key: %w", err)
 	}
@@ -101,7 +97,6 @@ func (r *PaymentRepository) FindByIdempotencyKey(ctx context.Context, key shared
 	return p, nil
 }
 
-// UpdateStatus updates the status of a payment
 func (r *PaymentRepository) UpdateStatus(ctx context.Context, id string, status payment.PaymentStatus) error {
 	query := `
 		UPDATE payments 
@@ -126,7 +121,6 @@ func (r *PaymentRepository) UpdateStatus(ctx context.Context, id string, status 
 	return nil
 }
 
-// scanPayment scans a database row into a Payment domain object
 func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) {
 	var (
 		id               string
@@ -149,7 +143,6 @@ func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) 
 		return nil, err
 	}
 
-	// Convert database values to domain objects
 	debtorIBANObj, err := shared.NewIBAN(debtorIBAN)
 	if err != nil {
 		return nil, fmt.Errorf("invalid debtor IBAN in database: %w", err)
@@ -170,7 +163,6 @@ func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) 
 		return nil, fmt.Errorf("invalid idempotency key in database: %w", err)
 	}
 
-	// Create payment domain object
 	p, err := payment.NewPayment(
 		id,
 		debtorIBANObj,
@@ -186,7 +178,6 @@ func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) 
 		return nil, fmt.Errorf("failed to create payment domain object: %w", err)
 	}
 
-	// Set the correct status (NewPayment always creates with PENDING status)
 	switch payment.PaymentStatus(status) {
 	case payment.StatusProcessed:
 		if err := p.MarkAsProcessed(updatedAt); err != nil {
@@ -197,7 +188,6 @@ func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) 
 			return nil, fmt.Errorf("failed to set payment status to failed: %w", err)
 		}
 	case payment.StatusPending:
-		// Already set by NewPayment
 	default:
 		return nil, fmt.Errorf("unknown payment status: %s", status)
 	}
@@ -205,9 +195,7 @@ func (r *PaymentRepository) scanPayment(row *sql.Row) (*payment.Payment, error) 
 	return p, nil
 }
 
-// isUniqueConstraintError checks if the error is a unique constraint violation
 func isUniqueConstraintError(err error) bool {
-	// SQLite unique constraint error message contains "UNIQUE constraint failed"
 	return err != nil && (
 		fmt.Sprintf("%v", err) == "UNIQUE constraint failed: payments.idempotency_key" ||
 		fmt.Sprintf("%v", err) == "UNIQUE constraint failed: payments.id")

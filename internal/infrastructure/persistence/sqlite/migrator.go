@@ -71,12 +71,12 @@ func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) 
 		return nil, fmt.Errorf("failed to get applied migrations: %w", err)
 	}
 
-	migrationMap := make(map[int]*Migration)
-	
+	migrationMap := make(map[int]Migration)
+
 	for _, migration := range availableMigrations {
-		migrationMap[migration.Version] = &migration
+		migrationMap[migration.Version] = migration
 	}
-	
+
 	for _, applied := range appliedMigrations {
 		if migration, exists := migrationMap[applied.Version]; exists {
 			migration.AppliedAt = applied.AppliedAt
@@ -85,9 +85,9 @@ func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) 
 
 	var result []Migration
 	for _, migration := range migrationMap {
-		result = append(result, *migration)
+		result = append(result, migration)
 	}
-	
+
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Version < result[j].Version
 	})
@@ -95,7 +95,6 @@ func (m *Migrator) GetMigrationStatus(ctx context.Context) ([]Migration, error) 
 	return result, nil
 }
 
-// createMigrationsTable creates the migrations tracking table
 func (m *Migrator) createMigrationsTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -106,12 +105,11 @@ func (m *Migrator) createMigrationsTable(ctx context.Context) error {
 		CREATE INDEX IF NOT EXISTS idx_schema_migrations_applied_at 
 		ON schema_migrations(applied_at);
 	`
-	
+
 	_, err := m.db.ExecContext(ctx, query)
 	return err
 }
 
-// getAvailableMigrations reads all migration files from the embedded filesystem
 func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
 	entries, err := migrationFiles.ReadDir("migrations")
 	if err != nil {
@@ -124,7 +122,6 @@ func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
 			continue
 		}
 
-		// Skip test data files
 		if strings.Contains(entry.Name(), "test_data") {
 			continue
 		}
@@ -137,7 +134,6 @@ func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
 		migrations = append(migrations, migration)
 	}
 
-	// Sort by version
 	sort.Slice(migrations, func(i, j int) bool {
 		return migrations[i].Version < migrations[j].Version
 	})
@@ -145,9 +141,7 @@ func (m *Migrator) getAvailableMigrations() ([]Migration, error) {
 	return migrations, nil
 }
 
-// parseMigrationFile parses a migration file and extracts version, name, and SQL
 func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
-	// Parse version from filename (e.g., "001_create_payments_table.sql")
 	parts := strings.SplitN(filename, "_", 2)
 	if len(parts) != 2 {
 		return Migration{}, fmt.Errorf("invalid migration filename format: %s", filename)
@@ -158,7 +152,6 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 		return Migration{}, fmt.Errorf("failed to parse version from filename %s: %w", filename, err)
 	}
 
-	// Read SQL content
 	sqlBytes, err := migrationFiles.ReadFile(filepath.Join("migrations", filename))
 	if err != nil {
 		return Migration{}, fmt.Errorf("failed to read migration file %s: %w", filename, err)
@@ -170,14 +163,13 @@ func (m *Migrator) parseMigrationFile(filename string) (Migration, error) {
 	}, nil
 }
 
-// getAppliedMigrations retrieves all applied migrations from the database
 func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error) {
 	query := `
 		SELECT version, applied_at 
 		FROM schema_migrations 
 		ORDER BY version
 	`
-	
+
 	rows, err := m.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query applied migrations: %w", err)
@@ -188,12 +180,12 @@ func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error
 	for rows.Next() {
 		var migration Migration
 		var appliedAt time.Time
-		
+
 		err := rows.Scan(&migration.Version, &appliedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan migration row: %w", err)
 		}
-		
+
 		migration.AppliedAt = &appliedAt
 		migrations = append(migrations, migration)
 	}
@@ -201,7 +193,6 @@ func (m *Migrator) getAppliedMigrations(ctx context.Context) ([]Migration, error
 	return migrations, rows.Err()
 }
 
-// findPendingMigrations compares available and applied migrations to find pending ones
 func (m *Migrator) findPendingMigrations(available, applied []Migration) []Migration {
 	appliedMap := make(map[int]bool)
 	for _, migration := range applied {
@@ -218,7 +209,6 @@ func (m *Migrator) findPendingMigrations(available, applied []Migration) []Migra
 	return pending
 }
 
-// applyMigration applies a single migration within a transaction
 func (m *Migrator) applyMigration(ctx context.Context, migration Migration) error {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -226,7 +216,6 @@ func (m *Migrator) applyMigration(ctx context.Context, migration Migration) erro
 	}
 	defer tx.Rollback()
 
-	// Execute migration SQL
 	if _, err := tx.ExecContext(ctx, migration.SQL); err != nil {
 		return fmt.Errorf("failed to execute migration SQL: %w", err)
 	}
@@ -238,4 +227,3 @@ func (m *Migrator) applyMigration(ctx context.Context, migration Migration) erro
 
 	return tx.Commit()
 }
-

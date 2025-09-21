@@ -18,7 +18,6 @@ func NewAmount(value float64) (Amount, error) {
 		return Amount{}, ErrInvalidAmount
 	}
 
-	// Convert to cents and round to avoid floating point precision issues
 	cents := int64(math.Round(value * 100))
 
 	return Amount{value: cents}, nil
