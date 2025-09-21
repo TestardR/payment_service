@@ -19,17 +19,17 @@ func NewPaymentService(repository payment.Repository) PaymentService {
 	}
 }
 
-func (s PaymentService) EnsureIdempotency(ctx context.Context, key shared.IdempotencyKey) (*payment.Payment, error) {
+func (s PaymentService) EnsureIdempotency(ctx context.Context, key shared.IdempotencyKey) (payment.Payment, error) {
 	existingPayment, err := s.repository.FindByIdempotencyKey(ctx, key)
 	if err != nil && !errors.Is(err, shared.ErrPaymentNotFound) {
-		return nil, err
+		return payment.Payment{}, err
 	}
 
 	if err == nil {
 		return existingPayment, shared.ErrDuplicatePayment
 	}
 
-	return nil, nil
+	return payment.Payment{}, nil
 }
 
 func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID string, newStatus payment.PaymentStatus, updatedAt time.Time) error {
@@ -53,5 +53,5 @@ func (s PaymentService) ProcessStatusUpdate(ctx context.Context, paymentID strin
 		return shared.ErrInvalidPaymentStatus
 	}
 
-	return s.repository.Save(ctx, *existingPayment)
+	return s.repository.Save(ctx, existingPayment)
 }

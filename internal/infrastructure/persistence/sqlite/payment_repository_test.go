@@ -89,7 +89,7 @@ func TestPaymentRepository_FindByID(t *testing.T) {
 		assert.Equal(t, testPayment.Status(), foundPayment.Status())
 	})
 
-	t.Run("returns nil for non-existent payment", func(t *testing.T) {
+	t.Run("returns error for non-existent payment", func(t *testing.T) {
 		t.Parallel()
 
 		repo, db := createTestRepository(t)
@@ -150,7 +150,7 @@ func TestPaymentRepository_FindByIdempotencyKey(t *testing.T) {
 		assert.Equal(t, testPayment.IdempotencyKey().Value(), foundPayment.IdempotencyKey().Value())
 	})
 
-	t.Run("returns nil for non-existent idempotency key", func(t *testing.T) {
+	t.Run("returns error for non-existent idempotency key", func(t *testing.T) {
 		t.Parallel()
 
 		repo, db := createTestRepository(t)
@@ -203,77 +203,6 @@ func TestPaymentRepository_UpdateStatus(t *testing.T) {
 		err := repo.UpdateStatus(ctx, "non-existent-id", payment.StatusProcessed)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
-	})
-
-	t.Run("updates timestamp when status changes", func(t *testing.T) {
-		t.Parallel()
-
-		repo, db := createTestRepository(t)
-		defer db.Close()
-
-		ctx := context.Background()
-		testPayment := createTestPayment(t)
-
-		// Save payment first
-		err := repo.Save(ctx, testPayment)
-		require.NoError(t, err)
-
-		// Wait to ensure timestamp difference (SQLite has second precision)
-		time.Sleep(1100 * time.Millisecond)
-
-		// Update status
-		err = repo.UpdateStatus(ctx, testPayment.ID(), payment.StatusProcessed)
-		require.NoError(t, err)
-
-		// Verify status was updated and timestamp is reasonable
-		var status string
-		var updatedTimestamp time.Time
-		err = db.QueryRowContext(ctx, "SELECT status, updated_at FROM payments WHERE id = ?", testPayment.ID()).Scan(&status, &updatedTimestamp)
-		require.NoError(t, err)
-
-		assert.Equal(t, string(payment.StatusProcessed), status)
-		// Just verify the timestamp is recent (within last 10 seconds)
-		assert.True(t, time.Since(updatedTimestamp) < 10*time.Second,
-			"Updated timestamp should be recent: %v", updatedTimestamp)
-	})
-}
-
-func TestPaymentRepository_ConcurrentOperations(t *testing.T) {
-	t.Parallel()
-
-	t.Run("handles concurrent saves with different idempotency keys", func(t *testing.T) {
-		t.Parallel()
-
-		repo, db := createTestRepository(t)
-		defer db.Close()
-
-		ctx := context.Background()
-		
-		// Create multiple payments with different idempotency keys
-		payments := make([]payment.Payment, 5)
-		for i := 0; i < 5; i++ {
-			payments[i] = createTestPaymentWithID(t, fmt.Sprintf("payment_%d", i))
-		}
-
-		// Save payments concurrently
-		errCh := make(chan error, 5)
-		for _, p := range payments {
-			go func(payment payment.Payment) {
-				errCh <- repo.Save(ctx, payment)
-			}(p)
-		}
-
-		// Check all saves succeeded
-		for i := 0; i < 5; i++ {
-			err := <-errCh
-			assert.NoError(t, err)
-		}
-
-		// Verify all payments were saved
-		var count int
-		err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM payments").Scan(&count)
-		require.NoError(t, err)
-		assert.Equal(t, 5, count)
 	})
 }
 

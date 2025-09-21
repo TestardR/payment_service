@@ -61,7 +61,7 @@ func (r PaymentRepository) FindByID(ctx context.Context, id string) (payment.Pay
 	`
 
 	row := r.db.QueryRowContext(ctx, query, id)
-	
+
 	p, err := r.scanPayment(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -82,7 +82,7 @@ func (r PaymentRepository) FindByIdempotencyKey(ctx context.Context, key shared.
 	`
 
 	row := r.db.QueryRowContext(ctx, query, key.Value())
-	
+
 	p, err := r.scanPayment(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -120,16 +120,16 @@ func (r PaymentRepository) UpdateStatus(ctx context.Context, id string, status p
 
 func (r PaymentRepository) scanPayment(row *sql.Row) (payment.Payment, error) {
 	var (
-		id               string
-		debtorIBAN       string
-		debtorName       string
-		creditorIBAN     string
-		creditorName     string
-		amountCents      int64
-		idempotencyKey   string
-		status           string
-		createdAt        time.Time
-		updatedAt        time.Time
+		id             string
+		debtorIBAN     string
+		debtorName     string
+		creditorIBAN   string
+		creditorName   string
+		amountCents    int64
+		idempotencyKey string
+		status         string
+		createdAt      time.Time
+		updatedAt      time.Time
 	)
 
 	err := row.Scan(
@@ -193,7 +193,6 @@ func (r PaymentRepository) scanPayment(row *sql.Row) (payment.Payment, error) {
 }
 
 func isUniqueConstraintError(err error) bool {
-	return err != nil && (
-		fmt.Sprintf("%v", err) == "UNIQUE constraint failed: payments.idempotency_key" ||
+	return err != nil && (fmt.Sprintf("%v", err) == "UNIQUE constraint failed: payments.idempotency_key" ||
 		fmt.Sprintf("%v", err) == "UNIQUE constraint failed: payments.id")
 }

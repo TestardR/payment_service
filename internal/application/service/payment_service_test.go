@@ -61,7 +61,7 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByIdempotencyKey(ctx, newKey).
-					Return(nil, shared.ErrPaymentNotFound)
+					Return(payment.Payment{}, shared.ErrPaymentNotFound)
 			},
 			expectPayment: false,
 			expectError:   nil,
@@ -87,8 +87,8 @@ func TestPaymentService_EnsureIdempotency(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err, "should not return error for new payment")
-				// For new payments, we expect nil payment
-				assert.Nil(t, foundPayment, "expected nil payment for new key")
+				// For new payments, we expect zero value payment
+				assert.Equal(t, payment.Payment{}, foundPayment, "expected zero value payment for new key")
 			}
 		})
 	}
@@ -107,7 +107,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 	now := time.Now()
 
 	// Helper function to create a fresh payment for each test
-	createTestPayment := func() *payment.Payment {
+	createTestPayment := func() payment.Payment {
 		testPayment, _ := payment.NewPayment(
 			"payment-123",
 			debtorIBAN,
@@ -139,7 +139,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 					Return(createTestPayment(), nil)
 				mockRepo.EXPECT().
 					Save(ctx, gomock.Cond(func(p interface{}) bool {
-						if pmt, ok := p.(*payment.Payment); ok {
+						if pmt, ok := p.(payment.Payment); ok {
 							return pmt.ID() == "payment-123" && pmt.Status() == payment.StatusProcessed
 						}
 						return false
@@ -158,7 +158,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 					Return(createTestPayment(), nil)
 				mockRepo.EXPECT().
 					Save(ctx, gomock.Cond(func(p interface{}) bool {
-						if pmt, ok := p.(*payment.Payment); ok {
+						if pmt, ok := p.(payment.Payment); ok {
 							return pmt.ID() == "payment-123" && pmt.Status() == payment.StatusFailed
 						}
 						return false
@@ -174,7 +174,7 @@ func TestPaymentService_ProcessStatusUpdate(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockRepository) {
 				mockRepo.EXPECT().
 					FindByID(ctx, "nonexistent").
-					Return(nil, shared.ErrPaymentNotFound)
+					Return(payment.Payment{}, shared.ErrPaymentNotFound)
 			},
 			expectError: true,
 		},
